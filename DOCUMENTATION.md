@@ -65,18 +65,28 @@ app/src/main/java/com/gymnastic/ecommerceapp/
 │   │   ├── UsuarioDao.kt        # DAO de usuario simplificado
 │   │   ├── Direccion.kt         # Entidad de dirección
 │   │   ├── DireccionDao.kt      # DAO de dirección simplificado
-│   │   └── UserInfo.kt          # Info del usuario
+│   │   ├── UserInfo.kt          # Info del usuario
+│   │   └── ThemePreferences.kt  # Preferencias de tema con DataStore
 │   ├── Repository.kt            # Repository simplificado
 │   └── ProductCatalog.kt        # Catálogo de productos mock
 ├── domain/
 │   └── Product.kt               # Modelo de dominio Product
 ├── ui/
-│   ├── components/              # Componentes reutilizables
+│   ├── components/              # Componentes reutilizables (estilo shadcn/ui)
 │   │   ├── BottomNavBar.kt      # Barra de navegación simplificada
-│   │   └── ProductCard.kt       # Card de producto
+│   │   ├── ProductCard.kt       # Card de producto
+│   │   ├── CartItemCard.kt      # Card de item del carrito
+│   │   ├── Buttons.kt           # Componentes de botones reutilizables
+│   │   ├── TextFields.kt        # Componentes de text fields
+│   │   ├── Cards.kt             # Componentes de cards
+│   │   ├── Badges.kt            # Componentes de badges
+│   │   ├── Dialogs.kt           # Componentes de diálogos
+│   │   ├── Loading.kt           # Estados de carga
+│   │   ├── EmptyStates.kt       # Estados vacíos
+│   │   └── ProgressStepper.kt   # Indicador de progreso para checkout
 │   ├── nav/
 │   │   └── NavGraph.kt          # Navegación simplificada
-│   ├── screens/                 # Pantallas de la aplicación (8 pantallas)
+│   ├── screens/                 # Pantallas de la aplicación (9 pantallas)
 │   │   ├── LoginScreen.kt       # Pantalla de login
 │   │   ├── RegisterScreen.kt    # Pantalla de registro
 │   │   ├── HomeScreen.kt        # Pantalla principal CON búsqueda integrada
@@ -86,15 +96,18 @@ app/src/main/java/com/gymnastic/ecommerceapp/
 │   │   ├── SuccessScreen.kt     # Confirmación de compra
 │   │   ├── ProfileScreen.kt     # Perfil de usuario
 │   │   └── DireccionesGuardadasScreen.kt # Gestión de direcciones
-│   ├── theme/
-│   │   └── Theme.kt             # Configuración de temas
+│   ├── theme/                   # Sistema de diseño (inspirado en shadcn/ui)
+│   │   ├── Color.kt             # Paleta de colores profesional
+│   │   ├── Theme.kt             # Configuración de temas
+│   │   ├── Type.kt              # Sistema tipográfico
+│   │   └── Dimensions.kt        # Espaciado y dimensiones
 │   └── viewmodels/              # ViewModels simplificados
 │       ├── AuthViewModel.kt     # Lógica de autenticación simplificada
 │       ├── CartViewModel.kt     # Lógica del carrito simplificada
 │       └── DireccionViewModel.kt # Lógica de direcciones simplificada
 ├── utils/
 │   └── NativeUtils.kt           # Utilidades nativas
-├── MainActivity.kt              # Actividad principal simplificada
+├── MainActivity.kt              # Actividad principal con tema dinámico
 └── EcomApp.kt                   # Clase Application
 ```
 
@@ -479,13 +492,16 @@ kapt("com.google.dagger:hilt-compiler:2.48")
 implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
 ```
 
-### Base de Datos
+### Base de Datos y Preferencias
 
 ```kotlin
 // Room Database
 implementation("androidx.room:room-runtime:2.6.1")
 implementation("androidx.room:room-ktx:2.6.1")
 kapt("androidx.room:room-compiler:2.6.1")
+
+// DataStore para preferencias persistentes
+implementation("androidx.datastore:datastore-preferences:1.1.1")
 
 // Coroutines
 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
@@ -640,7 +656,163 @@ SearchScreen → SearchQuery → FilterProducts → DisplayResults → DetailScr
 
 ---
 
+## 🎨 Sistema de Diseño (Shadcn/ui Inspirado)
+
+### Paleta de Colores Profesional
+
+La aplicación utiliza una paleta de colores inspirada en shadcn/ui, con tonos neutros y acentos profesionales:
+
+#### Colores Neutros (Base Zinc)
+```kotlin
+Zinc50 a Zinc950   // Escala de grises neutros
+Slate400 a Slate900 // Tonos slate para acentos
+```
+
+#### Colores de Acento
+```kotlin
+Blue400 a Blue800  // Azul profesional como color primario
+```
+
+#### Colores Semánticos
+```kotlin
+Green50-700   // Para mensajes de éxito
+Red50-700     // Para errores y acciones destructivas
+Yellow50-700  // Para advertencias
+```
+
+### Sistema Tipográfico
+
+Tipografía completa basada en Material Design 3:
+- **Display**: Large, Medium, Small (títulos grandes)
+- **Headline**: Large, Medium, Small (encabezados)
+- **Title**: Large, Medium, Small (títulos de sección)
+- **Body**: Large, Medium, Small (texto principal)
+- **Label**: Large, Medium, Small (etiquetas y botones)
+
+### Sistema de Espaciado
+
+Espaciado consistente usando `AppDimensions`:
+```kotlin
+spaceXXS: 2dp    spaceXS: 4dp     spaceS: 8dp
+spaceM: 12dp     spaceNormal: 16dp spaceL: 24dp
+spaceXL: 32dp    spaceXXL: 48dp   space3XL: 64dp
+```
+
+### Elevaciones y Radios
+
+```kotlin
+// Elevaciones
+elevationNone a elevationXL (0dp a 16dp)
+
+// Radios de borde
+cornerXS: 4dp    cornerS: 8dp     cornerM: 12dp
+cornerL: 16dp    cornerXL: 24dp   cornerFull: 999dp
+```
+
+---
+
+## 💫 Mejoras de UX Implementadas
+
+### 1. **Feedback al Agregar al Carrito** ✅
+
+**Implementación:**
+- `Snackbar` con mensaje "Producto agregado al carrito"
+- Botón de acción "Ver carrito" en el Snackbar
+- Vibración háptica sutil al agregar
+- Animación de escala en botones al presionar
+
+**Archivos:** `HomeScreen.kt`, `Buttons.kt`
+
+### 2. **Confirmación al Eliminar del Carrito** ✅
+
+**Implementación:**
+- Dialog de confirmación antes de eliminar items
+- Mensaje claro: "¿Estás seguro de que deseas eliminar [producto]?"
+- Botones diferenciados: "Cancelar" y "Eliminar"
+- Estilo destructivo (botón rojo) para acción de eliminar
+
+**Archivos:** `CartScreen.kt`, `Dialogs.kt`
+
+### 3. **Búsqueda Mejorada** ✅
+
+**Implementación:**
+- Botón "X" para limpiar búsqueda rápidamente
+- Aparece solo cuando hay texto en el campo
+- Búsqueda en tiempo real mientras escribes
+- Componente `SearchTextField` reutilizable
+
+**Archivos:** `HomeScreen.kt`, `TextFields.kt`
+
+### 4. **Animaciones de Botones** ✅
+
+**Implementación:**
+- Efecto de presión con escala 0.95
+- Duración de 100ms para transición suave
+- Aplicado a todos los botones principales
+- Usa `animateFloatAsState` y `graphicsLayer`
+
+**Archivos:** `Buttons.kt`
+
+### 5. **Indicador de Progreso en Checkout** ✅
+
+**Implementación:**
+- Stepper visual con 3 pasos: "Carrito → Datos → Confirmación"
+- Círculos numerados con estados (completado/activo/pendiente)
+- Checkmarks (✓) para pasos completados
+- Líneas conectoras entre pasos
+- Colores diferenciados según estado
+
+**Componente nuevo:** `ProgressStepper.kt`
+**Archivos:** `CheckoutScreen.kt`
+
+### 6. **Modo Oscuro con Toggle Persistente** ✅
+
+**Implementación:**
+- Toggle en `ProfileScreen` para cambiar tema
+- Persistencia con DataStore (mantiene preferencia entre sesiones)
+- Tema oscuro completo con paleta adaptada
+- Transición suave entre temas
+- Clase `ThemePreferences` para gestión
+
+**Archivos nuevos:** `ThemePreferences.kt`
+**Archivos modificados:** `ProfileScreen.kt`, `MainActivity.kt`, `Theme.kt`
+
+### 7. **Componentes Reutilizables Profesionales** ✅
+
+**Botones:**
+- `PrimaryButton`, `SecondaryButton`, `OutlineButton`
+- `DestructiveButton`, `GhostButton`, `SmallButton`
+
+**Text Fields:**
+- `AppOutlinedTextField`, `AppTextField`, `SearchTextField`
+- Soporte para iconos, errores, estados disabled
+
+**Cards:**
+- `AppCard`, `ElevatedAppCard`, `OutlinedAppCard`, `InfoCard`
+
+**Dialogs:**
+- `ConfirmDialog`, `InfoDialog`, `CustomDialog`
+
+**Estados:**
+- `LoadingScreen`, `LoadingIndicator`, `EmptyState`
+- `NoSearchResults`, `EmptyCart`, `CompactEmptyState`
+
+**Badges:**
+- `CountBadge`, `StatusBadge`
+
+---
+
 ## 📝 Notas de Desarrollo
+
+### Mejoras de UX Implementadas (Nueva Sección)
+
+✅ **Feedback Visual**: Snackbars y animaciones en acciones importantes
+✅ **Confirmaciones**: Diálogos antes de acciones destructivas
+✅ **Estados de Carga**: Indicadores visuales claros
+✅ **Animaciones Sutiles**: Micro-interacciones que mejoran la experiencia
+✅ **Modo Oscuro**: Tema completo con persistencia
+✅ **Diseño Profesional**: Sistema inspirado en shadcn/ui
+✅ **Componentes Reutilizables**: Biblioteca completa de UI
 
 ### Próximas Mejoras
 
@@ -651,6 +823,9 @@ SearchScreen → SearchQuery → FilterProducts → DisplayResults → DetailScr
 5. **Modo Offline**: Funcionalidad sin conexión
 6. **Testing**: Unit tests y UI tests
 7. **CI/CD**: Pipeline de integración continua
+8. **Pull to Refresh**: Actualizar contenido deslizando
+9. **Swipe Actions**: Eliminar con deslizamiento
+10. **Bottom Sheets**: Para selecciones y filtros
 
 ### Decisiones de Diseño
 
@@ -659,6 +834,8 @@ SearchScreen → SearchQuery → FilterProducts → DisplayResults → DetailScr
 - **Room Database**: Para persistencia local robusta
 - **Hilt DI**: Para gestión de dependencias
 - **StateFlow**: Para programación reactiva
+- **DataStore**: Para preferencias persistentes
+- **Shadcn/ui Style**: Para diseño profesional y limpio
 
 ---
 
@@ -746,6 +923,48 @@ Esta aplicación fue simplificada específicamente para estudiantes, manteniendo
 
 ---
 
-_Documentación generada para Ecommerce App Simplificada v2.0_
-_Última actualización: Diciembre 2024_
-_Simplificada para estudiantes - Mantiene toda la funcionalidad_
+---
+
+## 🎯 Resumen de Características
+
+### Funcionalidades Core
+✅ Autenticación completa (Login/Registro/Logout)
+✅ Catálogo de productos con búsqueda integrada
+✅ Carrito de compras persistente
+✅ Proceso de checkout completo
+✅ Gestión de direcciones múltiples
+✅ Perfil de usuario con configuraciones
+
+### Mejoras de UX
+✅ Snackbar feedback al agregar al carrito
+✅ Confirmación antes de eliminar items
+✅ Botón para limpiar búsqueda
+✅ Animaciones en botones (efecto presión)
+✅ Indicador de progreso en checkout (stepper)
+✅ Modo oscuro con toggle persistente
+✅ Componentes reutilizables profesionales
+✅ Diseño inspirado en shadcn/ui
+
+### Tecnologías Utilizadas
+✅ **Jetpack Compose** - UI declarativa moderna
+✅ **Material Design 3** - Sistema de diseño
+✅ **Room Database** - Persistencia local
+✅ **Hilt** - Inyección de dependencias
+✅ **StateFlow** - Programación reactiva
+✅ **DataStore** - Preferencias persistentes
+✅ **Coil** - Carga de imágenes
+✅ **Coroutines** - Programación asíncrona
+
+### Código Limpio
+✅ Variables y funciones en español
+✅ Comentarios educativos extensos
+✅ Arquitectura MVVM clara
+✅ Componentes modulares y reutilizables
+✅ Separación de responsabilidades
+✅ Documentación completa
+
+---
+
+_Documentación generada para Ecommerce App Simplificada v2.1_
+_Última actualización: Octubre 2024_
+_Simplificada para estudiantes - Mantiene toda la funcionalidad + Mejoras UX_
