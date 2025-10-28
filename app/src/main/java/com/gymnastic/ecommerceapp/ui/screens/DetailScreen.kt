@@ -19,6 +19,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.gymnastic.ecommerceapp.ui.components.OutlineButton
+import com.gymnastic.ecommerceapp.ui.components.PrimaryButton
+import com.gymnastic.ecommerceapp.ui.theme.AppDimensions
 import com.gymnastic.ecommerceapp.ui.viewmodels.CartViewModel
 import com.gymnastic.ecommerceapp.utils.NativeUtils
 
@@ -138,24 +141,22 @@ fun DetailScreen(
                 Spacer(modifier = Modifier.height(32.dp))
 
                 // Botones de acción
-                Button(
+                PrimaryButton(
                     onClick = {
                         cartViewModel.agregarAlCarritoConCantidad(producto, quantity)
                         NativeUtils.vibrateOnAddToCart(context)
                     },
-                    modifier = Modifier.fillMaxWidth().height(56.dp)
-                ) {
-                    Text("Agregar al carrito", fontSize = 16.sp)
-                }
+                    text = "Agregar al carrito",
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(AppDimensions.spaceM))
 
-                OutlinedButton(
+                OutlineButton(
                     onClick = onGoCart,
-                    modifier = Modifier.fillMaxWidth().height(56.dp)
-                ) {
-                    Text("Ver carrito", fontSize = 16.sp)
-                }
+                    text = "Ver carrito",
+                    modifier = Modifier.fillMaxWidth()
+                )
 
                 Spacer(modifier = Modifier.height(32.dp))
             }

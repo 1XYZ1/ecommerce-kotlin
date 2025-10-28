@@ -14,6 +14,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gymnastic.ecommerceapp.ui.components.CartItemCard
+import com.gymnastic.ecommerceapp.ui.components.EmptyCart
+import com.gymnastic.ecommerceapp.ui.components.PrimaryButton
+import com.gymnastic.ecommerceapp.ui.theme.AppDimensions
 import com.gymnastic.ecommerceapp.ui.viewmodels.CartViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,34 +57,23 @@ fun CartScreen(
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(AppDimensions.spaceM))
 
-                        Button(onClick = onCheckout, modifier = Modifier.fillMaxWidth()) {
-                            Text("Proceder al Checkout", fontSize = 16.sp)
-                        }
+                        PrimaryButton(
+                            onClick = onCheckout,
+                            text = "Proceder al Checkout",
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
             }
         }
     ) { paddingValues ->
         if (itemsCarrito.isEmpty()) {
-            Box(
+            EmptyCart(
                 modifier = Modifier.fillMaxSize().padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("🛒", fontSize = 64.sp)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("Tu carrito está vacío", fontSize = 20.sp, fontWeight = FontWeight.Medium)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        "Agrega algunos productos para comenzar",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
+                onStartShopping = onBack
+            )
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(paddingValues),

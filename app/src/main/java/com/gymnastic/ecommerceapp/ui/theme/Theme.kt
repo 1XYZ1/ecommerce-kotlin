@@ -8,42 +8,121 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-// Esquema de colores para tema oscuro
-private val DarkColorScheme = darkColorScheme(
-    primary = Blue80, // Azul principal
-    secondary = Orange80, // Naranja secundario
-    tertiary = Grey80, // Gris terciario
-    background = Color(0xFF121212), // Fondo oscuro
-    surface = Color(0xFF1E1E1E), // Superficie oscura
-    onPrimary = Color.Black, // Texto sobre azul
-    onSecondary = Color.Black, // Texto sobre naranja
-    onTertiary = Color.Black, // Texto sobre gris
-    onBackground = Color.White, // Texto sobre fondo
-    onSurface = Color.White // Texto sobre superficie
-)
+/**
+ * Tema profesional inspirado en shadcn/ui
+ *
+ * Características:
+ * - Paleta neutral zinc para máxima legibilidad
+ * - Acento azul slate profesional
+ * - Colores semánticos para estados
+ * - Diseñado para ser elegante y accesible
+ */
 
-// Esquema de colores para tema claro
+// ========== TEMA CLARO (Default) ==========
 private val LightColorScheme = lightColorScheme(
-    primary = Blue40, // Azul principal
-    secondary = Orange40, // Naranja secundario
-    tertiary = Grey40, // Gris terciario
-    background = Color(0xFFFFFBFE), // Fondo claro
-    surface = Color(0xFFFFFBFE), // Superficie clara
-    onPrimary = Color.White, // Texto sobre azul
-    onSecondary = Color.White, // Texto sobre naranja
-    onTertiary = Color.White, // Texto sobre gris
-    onBackground = Color(0xFF1C1B1F), // Texto sobre fondo
-    onSurface = Color(0xFF1C1B1F) // Texto sobre superficie
+    // Colores primarios - Azul profesional
+    primary = Blue600,
+    onPrimary = White,
+    primaryContainer = Zinc100,
+    onPrimaryContainer = Blue800,
+
+    // Colores secundarios - Slate neutro
+    secondary = Slate600,
+    onSecondary = White,
+    secondaryContainer = Zinc100,
+    onSecondaryContainer = Slate900,
+
+    // Colores terciarios - Acento sutil
+    tertiary = Slate500,
+    onTertiary = White,
+    tertiaryContainer = Zinc50,
+    onTertiaryContainer = Slate800,
+
+    // Colores de error
+    error = Red600,
+    onError = White,
+    errorContainer = Red50,
+    onErrorContainer = Red700,
+
+    // Fondos y superficies
+    background = White,
+    onBackground = Zinc900,
+    surface = White,
+    onSurface = Zinc900,
+    surfaceVariant = Zinc50,
+    onSurfaceVariant = Zinc600,
+
+    // Bordes y divisores
+    outline = Zinc300,
+    outlineVariant = Zinc200,
+
+    // Otros
+    scrim = BlackAlpha20,
+    inverseSurface = Zinc900,
+    inverseOnSurface = Zinc50,
+    inversePrimary = Blue400,
+    surfaceTint = Blue600
 )
 
+// ========== TEMA OSCURO ==========
+private val DarkColorScheme = darkColorScheme(
+    // Colores primarios - Azul profesional
+    primary = Blue500,
+    onPrimary = Zinc900,
+    primaryContainer = Blue800,
+    onPrimaryContainer = Zinc100,
+
+    // Colores secundarios - Slate neutro
+    secondary = Slate400,
+    onSecondary = Zinc900,
+    secondaryContainer = Slate800,
+    onSecondaryContainer = Zinc100,
+
+    // Colores terciarios - Acento sutil
+    tertiary = Slate500,
+    onTertiary = Zinc900,
+    tertiaryContainer = Slate700,
+    onTertiaryContainer = Zinc100,
+
+    // Colores de error
+    error = Red500,
+    onError = Zinc900,
+    errorContainer = Red700,
+    onErrorContainer = Red50,
+
+    // Fondos y superficies
+    background = Zinc950,
+    onBackground = Zinc50,
+    surface = Zinc950,
+    onSurface = Zinc50,
+    surfaceVariant = Zinc900,
+    onSurfaceVariant = Zinc400,
+
+    // Bordes y divisores
+    outline = Zinc700,
+    outlineVariant = Zinc800,
+
+    // Otros
+    scrim = BlackAlpha20,
+    inverseSurface = Zinc50,
+    inverseOnSurface = Zinc900,
+    inversePrimary = Blue600,
+    surfaceTint = Blue500
+)
+
+/**
+ * Tema principal de la aplicación
+ *
+ * @param darkTheme Si debe usar el tema oscuro (por defecto sigue el sistema)
+ * @param dynamicColor Si debe usar colores dinámicos en Android 12+ (deshabilitado por defecto para mantener consistencia)
+ * @param content Contenido composable de la aplicación
+ */
 @Composable
 fun EcommerceappTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false, // Deshabilitado para mantener diseño consistente
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -51,7 +130,6 @@ fun EcommerceappTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }

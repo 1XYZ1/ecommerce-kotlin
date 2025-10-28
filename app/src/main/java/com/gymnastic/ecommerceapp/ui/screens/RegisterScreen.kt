@@ -1,7 +1,8 @@
 package com.gymnastic.ecommerceapp.ui.screens
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
@@ -15,32 +16,22 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.gymnastic.ecommerceapp.ui.components.*
+import com.gymnastic.ecommerceapp.ui.theme.AppDimensions
 import com.gymnastic.ecommerceapp.ui.viewmodels.AuthViewModel
 
 /**
- * Pantalla de registro de usuario
+ * Pantalla de registro con diseño profesional shadcn/ui
  *
- * Esta pantalla permite a nuevos usuarios crear una cuenta en la aplicación.
- * Incluye:
- * - Campos para nombre, email, contraseña y confirmación de contraseña
- * - Validación de campos en tiempo real
- * - Botón de registro
- * - Enlace para volver a la pantalla de login
- * - Manejo de errores y estados de carga
- *
- * Utiliza Material Design 3 con el esquema de colores azul/naranja de la app.
+ * Permite a nuevos usuarios crear una cuenta.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
     onNavigateToLogin: () -> Unit,
     onRegisterSuccess: () -> Unit,
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
-    // Estados locales para los campos de entrada
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -48,218 +39,166 @@ fun RegisterScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
 
-    // Estados del ViewModel
     val estaCargando by authViewModel.estaCargando.collectAsState()
     val mensajeError by authViewModel.mensajeError.collectAsState()
     val estaLogueado by authViewModel.estaLogueado.collectAsState()
 
-    // Efecto para navegar cuando el registro sea exitoso
     LaunchedEffect(estaLogueado) {
         if (estaLogueado) {
             onRegisterSuccess()
         }
     }
 
-    // Limpiar errores cuando cambien los campos
     LaunchedEffect(name, email, password, confirmPassword) {
         if (mensajeError != null) {
             authViewModel.limpiarError()
         }
     }
 
-    // Layout principal centrado
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(AppDimensions.spaceNormal),
         contentAlignment = Alignment.Center
     ) {
-        Card(
+        ElevatedAppCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                .verticalScroll(rememberScrollState())
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(AppDimensions.spaceNormal)
             ) {
-                // Título de la pantalla
                 Text(
                     text = "Crear Cuenta",
-                    fontSize = 28.sp,
+                    style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )
 
                 Text(
                     text = "Únete a nuestra tienda",
-                    fontSize = 16.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(AppDimensions.spaceS))
 
-                // Campo de nombre
-                OutlinedTextField(
+                AppOutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Nombre completo") },
-                    leadingIcon = {
-                        Icon(Icons.Default.Person, contentDescription = "Nombre")
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    enabled = !estaCargando
+                    label = "Nombre completo",
+                    leadingIcon = Icons.Default.Person,
+                    enabled = !estaCargando,
+                    modifier = Modifier.fillMaxWidth()
                 )
 
-                // Campo de email
-                OutlinedTextField(
+                AppOutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("Email") },
-                    leadingIcon = {
-                        Icon(Icons.Default.Email, contentDescription = "Email")
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    enabled = !estaCargando
+                    label = "Email",
+                    placeholder = "tu@email.com",
+                    leadingIcon = Icons.Default.Email,
+                    enabled = !estaCargando,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = KeyboardType.Email
+                    ),
+                    modifier = Modifier.fillMaxWidth()
                 )
 
-                // Campo de contraseña
-                OutlinedTextField(
+                AppOutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("Contraseña") },
-                    leadingIcon = {
-                        Icon(Icons.Default.Lock, contentDescription = "Contraseña")
-                    },
+                    label = "Contraseña",
+                    leadingIcon = Icons.Default.Lock,
                     trailingIcon = {
                         TextButton(onClick = { passwordVisible = !passwordVisible }) {
                             Text(
                                 text = if (passwordVisible) "Ocultar" else "Mostrar",
-                                fontSize = 12.sp
+                                style = MaterialTheme.typography.labelSmall
                             )
                         }
                     },
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
                     enabled = !estaCargando,
-                    supportingText = {
-                        if (password.isNotEmpty() && password.length < 6) {
-                            Text(
-                                text = "Mínimo 6 caracteres",
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
+                    error = if (password.isNotEmpty() && password.length < 6) "Mínimo 6 caracteres" else null,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = KeyboardType.Password
+                    ),
+                    modifier = Modifier.fillMaxWidth()
                 )
 
-                // Campo de confirmación de contraseña
-                OutlinedTextField(
+                AppOutlinedTextField(
                     value = confirmPassword,
                     onValueChange = { confirmPassword = it },
-                    label = { Text("Confirmar contraseña") },
-                    leadingIcon = {
-                        Icon(Icons.Default.Lock, contentDescription = "Confirmar contraseña")
-                    },
+                    label = "Confirmar contraseña",
+                    leadingIcon = Icons.Default.Lock,
                     trailingIcon = {
                         TextButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
                             Text(
                                 text = if (confirmPasswordVisible) "Ocultar" else "Mostrar",
-                                fontSize = 12.sp
+                                style = MaterialTheme.typography.labelSmall
                             )
                         }
                     },
                     visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
                     enabled = !estaCargando,
-                    supportingText = {
-                        if (confirmPassword.isNotEmpty() && password != confirmPassword) {
-                            Text(
-                                text = "Las contraseñas no coinciden",
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
+                    error = if (confirmPassword.isNotEmpty() && password != confirmPassword) "Las contraseñas no coinciden" else null,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = KeyboardType.Password
+                    ),
+                    modifier = Modifier.fillMaxWidth()
                 )
 
-                // Mostrar mensaje de error si existe
                 mensajeError?.let { error ->
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        )
+                    InfoCard(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
                     ) {
                         Text(
                             text = error,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            modifier = Modifier.padding(12.dp),
-                            textAlign = TextAlign.Center
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(AppDimensions.spaceS))
 
-                // Botón de registro
-                Button(
+                PrimaryButton(
                     onClick = {
                         authViewModel.registrarUsuario(name, email, password, confirmPassword)
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
+                    text = "Crear Cuenta",
+                    modifier = Modifier.fillMaxWidth(),
                     enabled = !estaCargando &&
                             name.isNotBlank() &&
                             email.isNotBlank() &&
                             password.isNotBlank() &&
                             confirmPassword.isNotBlank() &&
                             password.length >= 6 &&
-                            password == confirmPassword
-                ) {
-                    if (estaCargando) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    } else {
-                        Text(
-                            text = "Crear Cuenta",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
+                            password == confirmPassword,
+                    isLoading = estaCargando
+                )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(AppDimensions.spaceM))
 
-                // Enlace para volver a login
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = "¿Ya tienes cuenta? ",
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    TextButton(onClick = onNavigateToLogin) {
-                        Text(
-                            text = "Inicia sesión aquí",
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
+                    GhostButton(
+                        onClick = onNavigateToLogin,
+                        text = "Inicia sesión aquí"
+                    )
                 }
             }
         }

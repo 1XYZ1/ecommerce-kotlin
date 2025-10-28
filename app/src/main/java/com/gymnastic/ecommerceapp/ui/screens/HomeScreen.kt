@@ -12,10 +12,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gymnastic.ecommerceapp.domain.Product
 import com.gymnastic.ecommerceapp.ui.components.ProductCard
+import com.gymnastic.ecommerceapp.ui.components.SearchTextField
+import com.gymnastic.ecommerceapp.ui.theme.AppDimensions
 import com.gymnastic.ecommerceapp.ui.viewmodels.CartViewModel
 import com.gymnastic.ecommerceapp.utils.NativeUtils
 
@@ -99,29 +102,21 @@ fun HomeScreen(
             // ========== BARRA DE BÚSQUEDA ==========
 
             /**
-             * Campo de búsqueda simple
+             * Campo de búsqueda con diseño shadcn/ui
              *
              * Se actualiza en tiempo real mientras el usuario escribe.
              * No necesita botón de búsqueda porque filtra automáticamente.
              */
-            OutlinedTextField(
+            SearchTextField(
                 value = textoBusqueda,
                 onValueChange = { nuevoTexto ->
                     textoBusqueda = nuevoTexto
                 },
+                placeholder = "Buscar productos...",
+                leadingIcon = Icons.Default.Search,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = {
-                    Text("Buscar productos...")
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Buscar"
-                    )
-                },
-                singleLine = true
+                    .padding(horizontal = AppDimensions.spaceNormal, vertical = AppDimensions.spaceS)
             )
 
             // ========== TÍTULO DE SECCIÓN ==========
@@ -132,9 +127,9 @@ fun HomeScreen(
                 } else {
                     "Resultados de búsqueda (${productosFiltrados.size})"
                 },
-                fontSize = 18.sp,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                modifier = Modifier.padding(horizontal = AppDimensions.spaceNormal, vertical = AppDimensions.spaceS)
             )
 
             // ========== GRID DE PRODUCTOS ==========
@@ -145,11 +140,27 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "No se encontraron productos para \"$textoBusqueda\"",
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Column(
+                        modifier = Modifier.padding(AppDimensions.space2XL),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(AppDimensions.spaceM)
+                    ) {
+                        Text(
+                            text = "🔍",
+                            style = MaterialTheme.typography.displayMedium
+                        )
+                        Text(
+                            text = "Sin resultados",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "No se encontraron productos para \"$textoBusqueda\"",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             } else {
                 // Mostrar grid de productos

@@ -14,6 +14,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.gymnastic.ecommerceapp.ui.components.DestructiveButton
 import com.gymnastic.ecommerceapp.ui.viewmodels.AuthViewModel
 
 /**
@@ -301,26 +302,13 @@ fun ProfileScreen(
                 )
 
                 // Botón de cerrar sesión
-                Button(
+                DestructiveButton(
                     onClick = { showLogoutDialog = true },
+                    text = "Cerrar Sesión",
+                    icon = Icons.Default.ExitToApp,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    ),
                     enabled = !estaCargando
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ExitToApp,
-                        contentDescription = "Cerrar sesión",
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Cerrar Sesión",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
+                )
             }
         }
 

@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.gymnastic.ecommerceapp.ui.theme.AppDimensions
 
 /**
  * Componente de navegación inferior simplificado para estudiantes
@@ -91,15 +92,10 @@ fun BottomNavBar(
 
                         // Badge para mostrar cantidad de items en el carrito
                         if (item.route == "cart" && cantidadItemsCarrito > 0) {
-                            Badge(
+                            CountBadge(
+                                count = cantidadItemsCarrito,
                                 modifier = Modifier.align(Alignment.TopEnd)
-                            ) {
-                                Text(
-                                    text = cantidadItemsCarrito.toString(),
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
+                            )
                         }
                     }
                 },

@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gymnastic.ecommerceapp.data.local.Direccion
+import com.gymnastic.ecommerceapp.ui.components.PrimaryButton
+import com.gymnastic.ecommerceapp.ui.theme.AppDimensions
 import com.gymnastic.ecommerceapp.ui.viewmodels.CartViewModel
 import com.gymnastic.ecommerceapp.ui.viewmodels.DireccionViewModel
 
@@ -293,17 +295,16 @@ fun CheckoutScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             // Botón confirmar compra
-            Button(
+            PrimaryButton(
                 onClick = {
                     if (validateForm()) {
                         cartViewModel.vaciarCarrito()
                         onSuccess()
                     }
                 },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(56.dp)
-            ) {
-                Text("Confirmar Compra", fontSize = 16.sp)
-            }
+                text = "Confirmar Compra",
+                modifier = Modifier.fillMaxWidth().padding(horizontal = AppDimensions.spaceNormal)
+            )
 
             Spacer(modifier = Modifier.height(32.dp))
         }

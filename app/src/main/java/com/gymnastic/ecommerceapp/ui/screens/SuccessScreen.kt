@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.gymnastic.ecommerceapp.ui.components.PrimaryButton
 import com.gymnastic.ecommerceapp.ui.viewmodels.CartViewModel
 import com.gymnastic.ecommerceapp.utils.NativeUtils
 
@@ -102,12 +103,11 @@ fun SuccessScreen(
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            Button(
+            PrimaryButton(
                 onClick = onBackHome,
-                modifier = Modifier.fillMaxWidth().height(56.dp)
-            ) {
-                Text("Volver al Inicio", fontSize = 16.sp)
-            }
+                text = "Volver al Inicio",
+                modifier = Modifier.fillMaxWidth()
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
