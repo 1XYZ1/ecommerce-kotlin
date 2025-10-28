@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,7 +14,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.gymnastic.ecommerceapp.data.local.CartItem
 import com.gymnastic.ecommerceapp.ui.components.CartItemCard
+import com.gymnastic.ecommerceapp.ui.components.ConfirmDialog
 import com.gymnastic.ecommerceapp.ui.components.EmptyCart
 import com.gymnastic.ecommerceapp.ui.components.PrimaryButton
 import com.gymnastic.ecommerceapp.ui.theme.AppDimensions
@@ -28,6 +31,10 @@ fun CartScreen(
 ) {
     val itemsCarrito by cartViewModel.itemsDelCarrito.collectAsState(initial = emptyList())
     val total = itemsCarrito.sumOf { it.productPrice * it.quantity }
+
+    // Estado para el diálogo de confirmación
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var itemToDelete by remember { mutableStateOf<CartItem?>(null) }
 
     Scaffold(
         topBar = {
@@ -87,7 +94,9 @@ fun CartScreen(
                             cartViewModel.actualizarCantidad(cartItem.productId, newQuantity)
                         },
                         onRemoveItem = {
-                            cartViewModel.eliminarDelCarrito(cartItem.productId)
+                            // Mostrar diálogo de confirmación
+                            itemToDelete = cartItem
+                            showDeleteDialog = true
                         }
                     )
                 }
@@ -95,5 +104,26 @@ fun CartScreen(
                 item { Spacer(modifier = Modifier.height(100.dp)) }
             }
         }
+    }
+
+    // Diálogo de confirmación para eliminar
+    if (showDeleteDialog && itemToDelete != null) {
+        ConfirmDialog(
+            onDismiss = {
+                showDeleteDialog = false
+                itemToDelete = null
+            },
+            onConfirm = {
+                itemToDelete?.let { item ->
+                    cartViewModel.eliminarDelCarrito(item.productId)
+                }
+                itemToDelete = null
+            },
+            title = "Eliminar producto",
+            message = "¿Estás seguro de que deseas eliminar ${itemToDelete?.productName} del carrito?",
+            confirmText = "Eliminar",
+            dismissText = "Cancelar",
+            isDestructive = true
+        )
     }
 }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -15,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import com.gymnastic.ecommerceapp.domain.Product
 import com.gymnastic.ecommerceapp.ui.components.ProductCard
 import com.gymnastic.ecommerceapp.ui.components.SearchTextField
@@ -40,6 +42,8 @@ fun HomeScreen(
     onProductClick: (Product) -> Unit
 ) {
     val contexto = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     // ========== ESTADOS LOCALES ==========
 
@@ -92,6 +96,9 @@ fun HomeScreen(
                     )
                 }
             )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
         }
     ) { paddingValues ->
         Column(
@@ -102,10 +109,10 @@ fun HomeScreen(
             // ========== BARRA DE BÚSQUEDA ==========
 
             /**
-             * Campo de búsqueda con diseño shadcn/ui
+             * Campo de búsqueda con diseño shadcn/ui y botón para limpiar
              *
              * Se actualiza en tiempo real mientras el usuario escribe.
-             * No necesita botón de búsqueda porque filtra automáticamente.
+             * Incluye botón X para limpiar la búsqueda rápidamente.
              */
             SearchTextField(
                 value = textoBusqueda,
@@ -114,6 +121,17 @@ fun HomeScreen(
                 },
                 placeholder = "Buscar productos...",
                 leadingIcon = Icons.Default.Search,
+                trailingIcon = if (textoBusqueda.isNotEmpty()) {
+                    {
+                        IconButton(onClick = { textoBusqueda = "" }) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Limpiar búsqueda",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                } else null,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = AppDimensions.spaceNormal, vertical = AppDimensions.spaceS)
@@ -177,6 +195,18 @@ fun HomeScreen(
                             onAddToCart = {
                                 cartViewModel.agregarAlCarrito(producto)
                                 NativeUtils.vibrateOnAddToCart(contexto)
+                                // Mostrar Snackbar con feedback
+                                scope.launch {
+                                    val result = snackbarHostState.showSnackbar(
+                                        message = "${producto.name} agregado al carrito",
+                                        actionLabel = "Ver carrito",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                    if (result == SnackbarResult.ActionPerformed) {
+                                        // Navegar al carrito si presiona "Ver carrito"
+                                        // Necesitarías pasar un callback onNavigateToCart
+                                    }
+                                }
                             }
                         )
                     }

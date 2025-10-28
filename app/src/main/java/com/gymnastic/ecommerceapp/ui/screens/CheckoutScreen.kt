@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gymnastic.ecommerceapp.data.local.Direccion
+import com.gymnastic.ecommerceapp.ui.components.CheckoutProgressStepper
 import com.gymnastic.ecommerceapp.ui.components.PrimaryButton
 import com.gymnastic.ecommerceapp.ui.theme.AppDimensions
 import com.gymnastic.ecommerceapp.ui.viewmodels.CartViewModel
@@ -125,6 +126,18 @@ fun CheckoutScreen(
             )
         }
     ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            // Indicador de progreso
+            CheckoutProgressStepper(
+                currentStep = 1, // Paso 2: Datos (0: Carrito, 1: Datos, 2: Confirmación)
+                steps = listOf("Carrito", "Datos", "Confirmación")
+            )
+
+            Divider(modifier = Modifier.padding(vertical = AppDimensions.spaceS))
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -307,6 +320,7 @@ fun CheckoutScreen(
             )
 
             Spacer(modifier = Modifier.height(32.dp))
+        }
         }
     }
 

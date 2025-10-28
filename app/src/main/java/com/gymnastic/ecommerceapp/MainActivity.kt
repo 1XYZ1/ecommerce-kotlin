@@ -38,9 +38,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            EcommerceappTheme {
-                EcommerceApp()
-            }
+            EcommerceApp()
         }
     }
 }
@@ -53,6 +51,12 @@ class MainActivity : ComponentActivity() {
  */
 @Composable
 fun EcommerceApp() {
+    // ========== TEMA DINÁMICO ==========
+
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val themePreferences = remember { com.gymnastic.ecommerceapp.data.local.ThemePreferences(context) }
+    val isDarkTheme by themePreferences.isDarkTheme.collectAsState(initial = false)
+
     // ========== CONTROLADORES Y VIEWMODELS ==========
 
     val controladorNavegacion = rememberNavController()
@@ -85,32 +89,34 @@ fun EcommerceApp() {
 
     // ========== UI PRINCIPAL ==========
 
-    Scaffold(
-        bottomBar = {
-            if (mostrarNavegacionInferior) {
-                BottomNavBar(
-                    rutaActual = rutaActual ?: Routes.HOME,
-                    onNavigate = { ruta ->
-                        controladorNavegacion.navigate(ruta) {
-                            // Evitar múltiples copias de la misma pantalla en el stack
-                            popUpTo(controladorNavegacion.graph.startDestinationId) {
-                                saveState = true
+    EcommerceappTheme(darkTheme = isDarkTheme) {
+        Scaffold(
+            bottomBar = {
+                if (mostrarNavegacionInferior) {
+                    BottomNavBar(
+                        rutaActual = rutaActual ?: Routes.HOME,
+                        onNavigate = { ruta ->
+                            controladorNavegacion.navigate(ruta) {
+                                // Evitar múltiples copias de la misma pantalla en el stack
+                                popUpTo(controladorNavegacion.graph.startDestinationId) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
-                    cantidadItemsCarrito = cantidadItemsCarrito
+                        },
+                        cantidadItemsCarrito = cantidadItemsCarrito
+                    )
+                }
+            }
+        ) { paddingValues ->
+            Box(modifier = Modifier.padding(paddingValues)) {
+                NavGraph(
+                    navController = controladorNavegacion,
+                    cartViewModel = viewModelCarrito,
+                    authViewModel = viewModelAuth
                 )
             }
-        }
-    ) { paddingValues ->
-        Box(modifier = Modifier.padding(paddingValues)) {
-            NavGraph(
-                navController = controladorNavegacion,
-                cartViewModel = viewModelCarrito,
-                authViewModel = viewModelAuth
-            )
         }
     }
 }

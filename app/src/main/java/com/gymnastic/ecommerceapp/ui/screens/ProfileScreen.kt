@@ -9,13 +9,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.gymnastic.ecommerceapp.data.local.ThemePreferences
 import com.gymnastic.ecommerceapp.ui.components.DestructiveButton
 import com.gymnastic.ecommerceapp.ui.viewmodels.AuthViewModel
+import kotlinx.coroutines.launch
 
 /**
  * Pantalla de perfil del usuario
@@ -42,6 +45,12 @@ fun ProfileScreen(
 
     // Estado para mostrar diálogo de confirmación de logout
     var showLogoutDialog by remember { mutableStateOf(false) }
+
+    // Preferencias de tema
+    val context = LocalContext.current
+    val themePreferences = remember { ThemePreferences(context) }
+    val isDarkTheme by themePreferences.isDarkTheme.collectAsState(initial = false)
+    val scope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -255,7 +264,7 @@ fun ProfileScreen(
 
                 Divider()
 
-                // Item de tema
+                // Item de tema oscuro
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -277,8 +286,12 @@ fun ProfileScreen(
                         )
                     }
                     Switch(
-                        checked = false, // Por ahora siempre tema claro
-                        onCheckedChange = { /* TODO: Implementar toggle de tema */ }
+                        checked = isDarkTheme,
+                        onCheckedChange = { isChecked ->
+                            scope.launch {
+                                themePreferences.setDarkTheme(isChecked)
+                            }
+                        }
                     )
                 }
             }
