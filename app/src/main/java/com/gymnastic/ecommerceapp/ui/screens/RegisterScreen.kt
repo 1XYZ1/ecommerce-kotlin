@@ -49,21 +49,21 @@ fun RegisterScreen(
     var confirmPasswordVisible by remember { mutableStateOf(false) }
 
     // Estados del ViewModel
-    val isLoading by authViewModel.isLoading.collectAsState()
-    val errorMessage by authViewModel.errorMessage.collectAsState()
-    val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
+    val estaCargando by authViewModel.estaCargando.collectAsState()
+    val mensajeError by authViewModel.mensajeError.collectAsState()
+    val estaLogueado by authViewModel.estaLogueado.collectAsState()
 
     // Efecto para navegar cuando el registro sea exitoso
-    LaunchedEffect(isLoggedIn) {
-        if (isLoggedIn) {
+    LaunchedEffect(estaLogueado) {
+        if (estaLogueado) {
             onRegisterSuccess()
         }
     }
 
     // Limpiar errores cuando cambien los campos
     LaunchedEffect(name, email, password, confirmPassword) {
-        if (errorMessage != null) {
-            authViewModel.clearError()
+        if (mensajeError != null) {
+            authViewModel.limpiarError()
         }
     }
 
@@ -116,7 +116,7 @@ fun RegisterScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    enabled = !isLoading
+                    enabled = !estaCargando
                 )
 
                 // Campo de email
@@ -130,7 +130,7 @@ fun RegisterScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    enabled = !isLoading
+                    enabled = !estaCargando
                 )
 
                 // Campo de contraseña
@@ -153,7 +153,7 @@ fun RegisterScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    enabled = !isLoading,
+                    enabled = !estaCargando,
                     supportingText = {
                         if (password.isNotEmpty() && password.length < 6) {
                             Text(
@@ -184,7 +184,7 @@ fun RegisterScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    enabled = !isLoading,
+                    enabled = !estaCargando,
                     supportingText = {
                         if (confirmPassword.isNotEmpty() && password != confirmPassword) {
                             Text(
@@ -196,7 +196,7 @@ fun RegisterScreen(
                 )
 
                 // Mostrar mensaje de error si existe
-                errorMessage?.let { error ->
+                mensajeError?.let { error ->
                     Card(
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.errorContainer
@@ -216,12 +216,12 @@ fun RegisterScreen(
                 // Botón de registro
                 Button(
                     onClick = {
-                        authViewModel.register(name, email, password, confirmPassword)
+                        authViewModel.registrarUsuario(name, email, password, confirmPassword)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    enabled = !isLoading &&
+                    enabled = !estaCargando &&
                             name.isNotBlank() &&
                             email.isNotBlank() &&
                             password.isNotBlank() &&
@@ -229,7 +229,7 @@ fun RegisterScreen(
                             password.length >= 6 &&
                             password == confirmPassword
                 ) {
-                    if (isLoading) {
+                    if (estaCargando) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
                             color = MaterialTheme.colorScheme.onPrimary

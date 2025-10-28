@@ -1,91 +1,102 @@
 package com.gymnastic.ecommerceapp.ui.nav
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.gymnastic.ecommerceapp.ui.screens.*
 import com.gymnastic.ecommerceapp.ui.viewmodels.CartViewModel
 
+/**
+ * Objeto que define todas las rutas de navegación de la aplicación
+ *
+ * Centralizar las rutas aquí hace el código más mantenible y evita
+ * errores de tipeo en las rutas de navegación.
+ */
 object Routes {
-    // Rutas de autenticación
+    // ========== RUTAS DE AUTENTICACIÓN ==========
     const val LOGIN = "login"
     const val REGISTER = "register"
 
-    // Rutas principales de la app
+    // ========== RUTAS PRINCIPALES ==========
     const val HOME = "home"
-    const val SEARCH = "search"
     const val CART = "cart"
     const val PROFILE = "profile"
 
-    // Rutas de productos y checkout
+    // ========== RUTAS DE PRODUCTOS Y CHECKOUT ==========
     const val DETAIL = "detail/{productId}"
     const val CHECKOUT = "checkout"
     const val SUCCESS = "success"
 
-    // Rutas de direcciones
+    // ========== RUTAS DE DIRECCIONES ==========
     const val SAVED_ADDRESSES = "saved_addresses"
 }
 
+/**
+ * Grafo de navegación simplificado para estudiantes
+ *
+ * Este componente define todas las rutas de la aplicación y cómo
+ * navegar entre ellas. Se simplificó eliminando animaciones complejas
+ * y la pantalla de búsqueda separada.
+ *
+ * CONCEPTOS IMPORTANTES PARA ESTUDIANTES:
+ * - NavHost: Contenedor principal de navegación
+ * - composable: Define una pantalla navegable
+ * - LaunchedEffect: Ejecuta efectos cuando cambian los valores observados
+ * - popUpTo: Limpia el stack de navegación
+ */
 @Composable
 fun NavGraph(
     navController: NavHostController,
     cartViewModel: CartViewModel,
     authViewModel: com.gymnastic.ecommerceapp.ui.viewmodels.AuthViewModel
 ) {
-    // Verificar estado de autenticación para determinar la pantalla inicial
-    val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
+    // ========== OBSERVAR ESTADO DE AUTENTICACIÓN ==========
 
-    // Navegar automáticamente a HOME si el usuario ya está logueado
-    LaunchedEffect(isLoggedIn) {
-        if (isLoggedIn) {
+    /**
+     * Observar si el usuario está logueado
+     *
+     * Cuando cambia este estado, navegamos automáticamente a la pantalla
+     * correspondiente (HOME si está logueado, LOGIN si no).
+     */
+    val estaLogueado by authViewModel.estaLogueado.collectAsState()
+
+    /**
+     * Efecto para navegar automáticamente según el estado de login
+     *
+     * LaunchedEffect se ejecuta cuando cambia el valor de estaLogueado.
+     * Si el usuario está logueado, navega a HOME y limpia el stack.
+     */
+    LaunchedEffect(estaLogueado) {
+        if (estaLogueado) {
             navController.navigate(Routes.HOME) {
+                // Limpiar todo el stack hasta LOGIN (incluyendo LOGIN)
                 popUpTo(Routes.LOGIN) { inclusive = true }
             }
         }
     }
 
+    // ========== CONFIGURACIÓN DE NAVEGACIÓN ==========
+
+    /**
+     * NavHost simplificado sin animaciones complejas
+     *
+     * Las animaciones por defecto de Compose Navigation son suficientes
+     * para una app de estudiantes y son más fáciles de entender.
+     */
     NavHost(
         navController = navController,
-        startDestination = Routes.LOGIN, // Siempre empezar en LOGIN
-        // Configurar animaciones de transición entre pantallas
-        enterTransition = {
-            // Animación de entrada: deslizar desde la derecha
-            slideInHorizontally(
-                initialOffsetX = { fullWidth -> fullWidth },
-                animationSpec = tween(300)
-            ) + fadeIn(animationSpec = tween(300))
-        },
-        exitTransition = {
-            // Animación de salida: deslizar hacia la izquierda
-            slideOutHorizontally(
-                targetOffsetX = { fullWidth -> -fullWidth },
-                animationSpec = tween(300)
-            ) + fadeOut(animationSpec = tween(300))
-        },
-        popEnterTransition = {
-            // Animación al volver: deslizar desde la izquierda
-            slideInHorizontally(
-                initialOffsetX = { fullWidth -> -fullWidth },
-                animationSpec = tween(300)
-            ) + fadeIn(animationSpec = tween(300))
-        },
-        popExitTransition = {
-            // Animación al salir hacia atrás: deslizar hacia la derecha
-            slideOutHorizontally(
-                targetOffsetX = { fullWidth -> fullWidth },
-                animationSpec = tween(300)
-            ) + fadeOut(animationSpec = tween(300))
-        }
+        startDestination = Routes.LOGIN // Siempre empezar en LOGIN
     ) {
-        // Pantallas de autenticación
+        // ========== PANTALLAS DE AUTENTICACIÓN ==========
+
         composable(Routes.LOGIN) {
-            com.gymnastic.ecommerceapp.ui.screens.LoginScreen(
+            LoginScreen(
                 onNavigateToRegister = {
                     navController.navigate(Routes.REGISTER)
                 },
@@ -98,7 +109,7 @@ fun NavGraph(
         }
 
         composable(Routes.REGISTER) {
-            com.gymnastic.ecommerceapp.ui.screens.RegisterScreen(
+            RegisterScreen(
                 onNavigateToLogin = {
                     navController.popBackStack()
                 },
@@ -110,21 +121,13 @@ fun NavGraph(
             )
         }
 
-        // Pantallas principales de la app
+        // ========== PANTALLAS PRINCIPALES ==========
+
         composable(Routes.HOME) {
             HomeScreen(
                 cartViewModel = cartViewModel,
-                onProductClick = { product ->
-                    navController.navigate("detail/${product.id}")
-                }
-            )
-        }
-
-        composable(Routes.SEARCH) {
-            com.gymnastic.ecommerceapp.ui.screens.SearchScreen(
-                cartViewModel = cartViewModel,
-                onProductClick = { product ->
-                    navController.navigate("detail/${product.id}")
+                onProductClick = { producto ->
+                    navController.navigate("detail/${producto.id}")
                 }
             )
         }
@@ -142,7 +145,7 @@ fun NavGraph(
         }
 
         composable(Routes.PROFILE) {
-            com.gymnastic.ecommerceapp.ui.screens.ProfileScreen(
+            ProfileScreen(
                 onLogout = {
                     navController.navigate(Routes.LOGIN) {
                         popUpTo(Routes.HOME) { inclusive = true }
@@ -154,11 +157,18 @@ fun NavGraph(
             )
         }
 
-        composable(Routes.DETAIL) { backStackEntry ->
+        // ========== PANTALLAS DE PRODUCTOS Y CHECKOUT ==========
+
+        composable(
+            route = Routes.DETAIL,
+            arguments = listOf(
+                navArgument("productId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
             // Extraer el productId de los argumentos de navegación
             val productId = backStackEntry.arguments?.getString("productId") ?: ""
             DetailScreen(
-                productId = productId,
+                productoId = productId,
                 cartViewModel = cartViewModel,
                 onGoCart = {
                     navController.navigate(Routes.CART)
@@ -174,7 +184,7 @@ fun NavGraph(
                 cartViewModel = cartViewModel,
                 onSuccess = {
                     navController.navigate(Routes.SUCCESS) {
-                        // Limpiar el stack de navegación hasta HOME (excluyendo HOME)
+                        // Limpiar el stack hasta HOME (excluyendo HOME)
                         popUpTo(Routes.HOME) { inclusive = false }
                     }
                 },
@@ -196,8 +206,10 @@ fun NavGraph(
             )
         }
 
+        // ========== PANTALLAS DE DIRECCIONES ==========
+
         composable(Routes.SAVED_ADDRESSES) {
-            com.gymnastic.ecommerceapp.ui.screens.DireccionesGuardadasScreen(
+            DireccionesGuardadasScreen(
                 onBack = {
                     navController.popBackStack()
                 }

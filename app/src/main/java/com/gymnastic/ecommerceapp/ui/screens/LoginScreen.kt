@@ -45,21 +45,21 @@ fun LoginScreen(
     var passwordVisible by remember { mutableStateOf(false) }
 
     // Estados del ViewModel
-    val isLoading by authViewModel.isLoading.collectAsState()
-    val errorMessage by authViewModel.errorMessage.collectAsState()
-    val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
+    val estaCargando by authViewModel.estaCargando.collectAsState()
+    val mensajeError by authViewModel.mensajeError.collectAsState()
+    val estaLogueado by authViewModel.estaLogueado.collectAsState()
 
     // Efecto para navegar cuando el login sea exitoso
-    LaunchedEffect(isLoggedIn) {
-        if (isLoggedIn) {
+    LaunchedEffect(estaLogueado) {
+        if (estaLogueado) {
             onLoginSuccess()
         }
     }
 
     // Limpiar errores cuando cambien los campos
     LaunchedEffect(email, password) {
-        if (errorMessage != null) {
-            authViewModel.clearError()
+        if (mensajeError != null) {
+            authViewModel.limpiarError()
         }
     }
 
@@ -112,7 +112,7 @@ fun LoginScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    enabled = !isLoading
+                    enabled = !estaCargando
                 )
 
                 // Campo de contraseña
@@ -135,11 +135,11 @@ fun LoginScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    enabled = !isLoading
+                    enabled = !estaCargando
                 )
 
                 // Mostrar mensaje de error si existe
-                errorMessage?.let { error ->
+                mensajeError?.let { error ->
                     Card(
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.errorContainer
@@ -159,14 +159,14 @@ fun LoginScreen(
                 // Botón de login
                 Button(
                     onClick = {
-                        authViewModel.login(email, password)
+                        authViewModel.iniciarSesion(email, password)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    enabled = !isLoading && email.isNotBlank() && password.isNotBlank()
+                    enabled = !estaCargando && email.isNotBlank() && password.isNotBlank()
                 ) {
-                    if (isLoading) {
+                    if (estaCargando) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
                             color = MaterialTheme.colorScheme.onPrimary

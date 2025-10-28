@@ -4,71 +4,80 @@ import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 
 /**
- * DAO para operaciones con la tabla de usuarios
+ * DAO simplificado para operaciones con usuarios
  *
- * Maneja todas las operaciones CRUD para usuarios usando Room Database.
- * Incluye queries específicas para autenticación y gestión de usuarios.
+ * Este DAO maneja todas las operaciones de base de datos relacionadas
+ * con usuarios. Se simplificó eliminando queries innecesarias y
+ * manteniendo solo las funciones esenciales para esta app de estudiantes.
+ *
+ * CONCEPTOS IMPORTANTES PARA ESTUDIANTES:
+ * - En esta app solo hay un usuario por aplicación (simplificado)
+ * - Las queries usan 'usuario_principal' como ID fijo
+ * - Flow permite observación reactiva de cambios
+ * - suspend indica operaciones asíncronas
  */
 @Dao
 interface UsuarioDao {
 
-    /**
-     * Obtiene todos los usuarios (por ahora solo habrá uno)
-     */
-    @Query("SELECT * FROM usuarios")
-    fun getAllUsuarios(): Flow<List<Usuario>>
+    // ========== CONSULTAS PRINCIPALES ==========
 
     /**
-     * Obtiene un usuario por su ID
-     */
-    @Query("SELECT * FROM usuarios WHERE id = :id")
-    suspend fun getUsuarioById(id: String): Usuario?
-
-    /**
-     * Obtiene el usuario principal (el único usuario del sistema)
+     * Obtiene el usuario principal de la aplicación
+     *
+     * En esta app simplificada solo hay un usuario por aplicación.
+     * Su ID es siempre 'usuario_principal'.
      */
     @Query("SELECT * FROM usuarios WHERE id = 'usuario_principal'")
     suspend fun getUsuarioPrincipal(): Usuario?
 
     /**
      * Obtiene el usuario principal como Flow para observación reactiva
+     *
+     * La UI puede observar este Flow y actualizarse automáticamente
+     * cuando cambien los datos del usuario.
      */
     @Query("SELECT * FROM usuarios WHERE id = 'usuario_principal'")
     fun getUsuarioPrincipalFlow(): Flow<Usuario?>
 
+    // ========== OPERACIONES CRUD ==========
+
     /**
-     * Inserta un nuevo usuario
+     * Inserta o actualiza el usuario principal
+     *
+     * Si el usuario ya existe, lo reemplaza completamente.
+     * Si no existe, lo crea nuevo.
      */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUsuario(usuario: Usuario)
 
     /**
      * Actualiza un usuario existente
+     *
+     * Solo actualiza los campos que han cambiado.
      */
     @Update
     suspend fun updateUsuario(usuario: Usuario)
 
     /**
-     * Elimina un usuario
-     */
-    @Delete
-    suspend fun deleteUsuario(usuario: Usuario)
-
-    /**
-     * Elimina todos los usuarios
-     */
-    @Query("DELETE FROM usuarios")
-    suspend fun deleteAllUsuarios()
-
-    /**
-     * Actualiza el estado de login del usuario principal
+     * Actualiza solo el estado de login del usuario principal
+     *
+     * Esta función es más eficiente que updateUsuario cuando solo
+     * necesitamos cambiar el estado de login.
+     *
+     * @param estaLogueado nuevo estado de login
+     * @param timestamp momento de la actualización
      */
     @Query("UPDATE usuarios SET estaLogueado = :estaLogueado, fechaUltimaActualizacion = :timestamp WHERE id = 'usuario_principal'")
     suspend fun updateLoginStatus(estaLogueado: Boolean, timestamp: Long = System.currentTimeMillis())
 
+    // ========== OPERACIONES DE LIMPIEZA ==========
+
     /**
-     * Verifica si existe un usuario con el email dado
+     * Elimina todos los usuarios
+     *
+     * Se usa para limpiar completamente la base de datos.
+     * Útil para testing o reset completo de la app.
      */
-    @Query("SELECT COUNT(*) FROM usuarios WHERE email = :email")
-    suspend fun existeUsuarioConEmail(email: String): Int
+    @Query("DELETE FROM usuarios")
+    suspend fun deleteAllUsuarios()
 }

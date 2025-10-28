@@ -7,84 +7,138 @@ import com.gymnastic.ecommerceapp.data.local.Usuario
 import com.gymnastic.ecommerceapp.domain.Product
 import kotlinx.coroutines.flow.Flow
 
-class Repository(private val database: AppDb) {
-    private val cartDao = database.cartDao()
-    private val usuarioDao = database.usuarioDao()
-    private val direccionDao = database.direccionDao()
+/**
+ * Repository simplificado para estudiantes
+ *
+ * Este Repository actúa como una capa simple entre los ViewModels y la base de datos.
+ * Su propósito es centralizar las operaciones de datos y hacer el código más fácil de entender.
+ *
+ * IMPORTANTE: En aplicaciones reales, el Repository es más complejo porque maneja
+ * múltiples fuentes de datos (API, base de datos local, cache). Aquí lo mantenemos
+ * simple para que los estudiantes entiendan el concepto básico.
+ */
+class Repository(private val baseDeDatos: AppDb) {
 
-    // Product operations
-    fun getAllProducts(): List<Product> = ProductCatalog.products
+    // Acceso directo a los DAOs (Data Access Objects)
+    // Los DAOs son las clases que manejan las operaciones de base de datos
+    private val daoCarrito = baseDeDatos.cartDao()
+    private val daoUsuario = baseDeDatos.usuarioDao()
+    private val daoDireccion = baseDeDatos.direccionDao()
 
-    fun getProductById(id: String): Product? = ProductCatalog.products.find { it.id == id }
+    // ========== OPERACIONES DE PRODUCTOS ==========
 
-    // Cart operations
-    fun getAllCartItems(): Flow<List<CartItem>> = cartDao.getAllCartItems()
+    /**
+     * Obtiene todos los productos disponibles
+     *
+     * Los productos están hardcodeados en ProductCatalog para simplificar.
+     * En una app real, vendrían de una API o base de datos.
+     */
+    fun obtenerTodosLosProductos(): List<Product> = ProductCatalog.products
 
-    suspend fun addToCart(product: Product) {
-        val existingItem = cartDao.getCartItem(product.id)
-        if (existingItem != null) {
-            val updatedItem = existingItem.copy(quantity = existingItem.quantity + 1)
-            cartDao.updateCartItem(updatedItem)
+    /**
+     * Busca un producto por su ID
+     */
+    fun obtenerProductoPorId(id: String): Product? = ProductCatalog.products.find { it.id == id }
+
+    // ========== OPERACIONES DEL CARRITO ==========
+
+    /**
+     * Obtiene todos los items del carrito como Flow
+     *
+     * Flow es un stream de datos que se actualiza automáticamente cuando
+     * cambian los datos en la base de datos. La UI puede observar este Flow
+     * y actualizarse automáticamente.
+     */
+    fun obtenerItemsDelCarrito(): Flow<List<CartItem>> = daoCarrito.getAllCartItems()
+
+    /**
+     * Agrega un producto al carrito
+     *
+     * Si el producto ya existe, incrementa la cantidad.
+     * Si no existe, lo agrega con cantidad 1.
+     */
+    suspend fun agregarAlCarrito(producto: Product) {
+        val itemExistente = daoCarrito.getCartItem(producto.id)
+        if (itemExistente != null) {
+            // El producto ya está en el carrito, incrementar cantidad
+            val itemActualizado = itemExistente.copy(quantity = itemExistente.quantity + 1)
+            daoCarrito.updateCartItem(itemActualizado)
         } else {
-            val newItem = CartItem(
-                productId = product.id,
-                productName = product.name,
-                productPrice = product.price,
-                productImageUrl = product.imageUrl,
+            // El producto no está en el carrito, agregarlo nuevo
+            val nuevoItem = CartItem(
+                productId = producto.id,
+                productName = producto.name,
+                productPrice = producto.price,
+                productImageUrl = producto.imageUrl,
                 quantity = 1
             )
-            cartDao.insertCartItem(newItem)
+            daoCarrito.insertCartItem(nuevoItem)
         }
     }
 
-    suspend fun removeFromCart(productId: String) {
-        val item = cartDao.getCartItem(productId)
-        item?.let { cartDao.deleteCartItem(it) }
+    /**
+     * Elimina un producto del carrito completamente
+     */
+    suspend fun eliminarDelCarrito(idProducto: String) {
+        val item = daoCarrito.getCartItem(idProducto)
+        item?.let { daoCarrito.deleteCartItem(it) }
     }
 
-    suspend fun updateCartItemQuantity(productId: String, quantity: Int) {
-        val item = cartDao.getCartItem(productId)
+    /**
+     * Actualiza la cantidad de un producto en el carrito
+     *
+     * Si la cantidad es 0 o menor, elimina el producto del carrito.
+     */
+    suspend fun actualizarCantidadEnCarrito(idProducto: String, cantidad: Int) {
+        val item = daoCarrito.getCartItem(idProducto)
         item?.let {
-            if (quantity <= 0) {
-                cartDao.deleteCartItem(it)
+            if (cantidad <= 0) {
+                // Si la cantidad es 0 o menor, eliminar del carrito
+                daoCarrito.deleteCartItem(it)
             } else {
-                cartDao.updateCartItem(it.copy(quantity = quantity))
+                // Actualizar la cantidad
+                daoCarrito.updateCartItem(it.copy(quantity = cantidad))
             }
         }
     }
 
-    suspend fun clearCart() {
-        cartDao.clearCart()
+    /**
+     * Vacía completamente el carrito
+     */
+    suspend fun vaciarCarrito() {
+        daoCarrito.clearCart()
     }
 
     // ========== OPERACIONES DE USUARIO ==========
 
     /**
-     * Obtiene el usuario principal
+     * Obtiene el usuario principal de la aplicación
+     *
+     * En esta app simplificada solo hay un usuario por aplicación.
      */
-    suspend fun getUsuarioPrincipal(): Usuario? {
-        return usuarioDao.getUsuarioPrincipal()
+    suspend fun obtenerUsuarioPrincipal(): Usuario? {
+        return daoUsuario.getUsuarioPrincipal()
     }
 
     /**
-     * Obtiene el usuario principal como Flow
+     * Obtiene el usuario principal como Flow para observación reactiva
      */
-    fun getUsuarioPrincipalFlow(): Flow<Usuario?> {
-        return usuarioDao.getUsuarioPrincipalFlow()
+    fun obtenerUsuarioPrincipalFlow(): Flow<Usuario?> {
+        return daoUsuario.getUsuarioPrincipalFlow()
     }
 
     /**
-     * Inserta o actualiza el usuario principal
+     * Guarda o actualiza el usuario principal
      */
-    suspend fun insertOrUpdateUsuario(usuario: Usuario) {
-        usuarioDao.insertUsuario(usuario)
+    suspend fun guardarUsuario(usuario: Usuario) {
+        daoUsuario.insertUsuario(usuario)
     }
 
     /**
-     * Actualiza el estado de login del usuario
+     * Actualiza solo el estado de login del usuario
      */
-    suspend fun updateLoginStatus(estaLogueado: Boolean) {
-        usuarioDao.updateLoginStatus(estaLogueado)
+    suspend fun actualizarEstadoLogin(estaLogueado: Boolean) {
+        daoUsuario.updateLoginStatus(estaLogueado)
     }
 
     // ========== OPERACIONES DE DIRECCIONES ==========
@@ -92,64 +146,67 @@ class Repository(private val database: AppDb) {
     /**
      * Obtiene todas las direcciones del usuario principal
      */
-    fun getDireccionesUsuarioPrincipal(): Flow<List<Direccion>> {
-        return direccionDao.getDireccionesUsuarioPrincipal()
+    fun obtenerDireccionesUsuario(): Flow<List<Direccion>> {
+        return daoDireccion.getDireccionesUsuarioPrincipal()
     }
 
     /**
-     * Obtiene la dirección predeterminada del usuario principal
+     * Obtiene la dirección predeterminada del usuario
      */
-    suspend fun getDireccionPredeterminadaUsuarioPrincipal(): Direccion? {
-        return direccionDao.getDireccionPredeterminadaUsuarioPrincipal()
+    suspend fun obtenerDireccionPredeterminada(): Direccion? {
+        return daoDireccion.getDireccionPredeterminadaUsuarioPrincipal()
     }
 
     /**
-     * Obtiene una dirección por su ID
+     * Busca una dirección por su ID
      */
-    suspend fun getDireccionById(id: String): Direccion? {
-        return direccionDao.getDireccionById(id)
+    suspend fun obtenerDireccionPorId(id: String): Direccion? {
+        return daoDireccion.getDireccionById(id)
     }
 
     /**
      * Guarda una nueva dirección
+     *
+     * Si se marca como predeterminada, quita el flag de las otras direcciones
+     * para asegurar que solo haya una dirección predeterminada.
      */
     suspend fun guardarDireccion(direccion: Direccion) {
-        // Si se marca como predeterminada, quitar el flag de las otras direcciones
         if (direccion.esPredeterminada) {
-            direccionDao.quitarPredeterminadaDeTodas(direccion.usuarioId)
+            // Quitar el flag de predeterminada de todas las otras direcciones
+            daoDireccion.quitarPredeterminadaDeTodas(direccion.usuarioId)
         }
-        direccionDao.insertDireccion(direccion)
+        daoDireccion.insertDireccion(direccion)
     }
 
     /**
      * Actualiza una dirección existente
      */
     suspend fun actualizarDireccion(direccion: Direccion) {
-        // Si se marca como predeterminada, quitar el flag de las otras direcciones
         if (direccion.esPredeterminada) {
-            direccionDao.quitarPredeterminadaDeTodas(direccion.usuarioId)
+            // Quitar el flag de predeterminada de todas las otras direcciones
+            daoDireccion.quitarPredeterminadaDeTodas(direccion.usuarioId)
         }
-        direccionDao.updateDireccion(direccion)
+        daoDireccion.updateDireccion(direccion)
     }
 
     /**
-     * Elimina una dirección
+     * Elimina una dirección por su ID
      */
-    suspend fun eliminarDireccion(direccionId: String) {
-        direccionDao.deleteDireccionById(direccionId)
+    suspend fun eliminarDireccion(idDireccion: String) {
+        daoDireccion.deleteDireccionById(idDireccion)
     }
 
     /**
      * Establece una dirección como predeterminada
      */
-    suspend fun establecerDireccionPredeterminada(direccionId: String) {
-        direccionDao.establecerDireccionPredeterminada("usuario_principal", direccionId)
+    suspend fun establecerDireccionPredeterminada(idDireccion: String) {
+        daoDireccion.establecerDireccionPredeterminada("usuario_principal", idDireccion)
     }
 
     /**
-     * Cuenta el número de direcciones del usuario principal
+     * Cuenta cuántas direcciones tiene el usuario
      */
-    suspend fun contarDireccionesUsuarioPrincipal(): Int {
-        return direccionDao.contarDireccionesByUsuario("usuario_principal")
+    suspend fun contarDireccionesUsuario(): Int {
+        return daoDireccion.contarDireccionesUsuario()
     }
 }

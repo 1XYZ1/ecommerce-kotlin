@@ -23,8 +23,8 @@ fun CartScreen(
     onCheckout: () -> Unit,
     onBack: () -> Unit
 ) {
-    val cartItems by cartViewModel.cartItems.collectAsState(initial = emptyList())
-    val total = cartItems.sumOf { it.productPrice * it.quantity }
+    val itemsCarrito by cartViewModel.itemsDelCarrito.collectAsState(initial = emptyList())
+    val total = itemsCarrito.sumOf { it.productPrice * it.quantity }
 
     Scaffold(
         topBar = {
@@ -38,7 +38,7 @@ fun CartScreen(
             )
         },
         bottomBar = {
-            if (cartItems.isNotEmpty()) {
+            if (itemsCarrito.isNotEmpty()) {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(
@@ -64,7 +64,7 @@ fun CartScreen(
             }
         }
     ) { paddingValues ->
-        if (cartItems.isEmpty()) {
+        if (itemsCarrito.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize().padding(paddingValues),
                 contentAlignment = Alignment.Center
@@ -88,14 +88,14 @@ fun CartScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(cartItems) { cartItem ->
+                items(itemsCarrito) { cartItem ->
                     CartItemCard(
                         cartItem = cartItem,
                         onUpdateQuantity = { newQuantity ->
-                            cartViewModel.updateQuantity(cartItem.productId, newQuantity)
+                            cartViewModel.actualizarCantidad(cartItem.productId, newQuantity)
                         },
                         onRemoveItem = {
-                            cartViewModel.removeFromCart(cartItem.productId)
+                            cartViewModel.eliminarDelCarrito(cartItem.productId)
                         }
                     )
                 }

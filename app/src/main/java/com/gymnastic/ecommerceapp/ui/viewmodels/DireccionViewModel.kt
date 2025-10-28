@@ -14,50 +14,69 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * ViewModel para manejar la gestión de direcciones guardadas
+ * ViewModel simplificado para manejar direcciones guardadas
  *
- * Maneja todas las operaciones relacionadas con direcciones:
+ * Este ViewModel maneja todas las operaciones relacionadas con direcciones:
  * - Cargar direcciones guardadas
  * - Agregar nuevas direcciones
  * - Actualizar direcciones existentes
  * - Eliminar direcciones
  * - Establecer dirección predeterminada
+ *
+ * CONCEPTOS IMPORTANTES PARA ESTUDIANTES:
+ * - stateIn: Convierte un Flow en StateFlow con un valor inicial
+ * - SharingStarted.WhileSubscribed: Solo mantiene el Flow activo mientras hay observadores
+ * - Validaciones: Verificar datos antes de guardar en la base de datos
  */
 @HiltViewModel
 class DireccionViewModel @Inject constructor(
-    private val repository: Repository
+    private val repositorio: Repository
 ) : ViewModel() {
 
-    // Estados principales - usando stateIn para simplificar
-    val direcciones: StateFlow<List<Direccion>> = repository.getDireccionesUsuarioPrincipal()
+    // ========== ESTADOS OBSERVABLES ==========
+
+    /**
+     * Lista de direcciones del usuario
+     *
+     * Se actualiza automáticamente cuando cambian las direcciones en la base de datos.
+     * stateIn convierte el Flow en StateFlow para facilitar su uso en la UI.
+     */
+    val direcciones: StateFlow<List<Direccion>> = repositorio.obtenerDireccionesUsuario()
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
+            started = SharingStarted.WhileSubscribed(5000), // Solo activo mientras hay observadores
             initialValue = emptyList()
         )
 
+    /**
+     * Dirección predeterminada del usuario
+     */
     private val _direccionPredeterminada = MutableStateFlow<Direccion?>(null)
     val direccionPredeterminada: StateFlow<Direccion?> = _direccionPredeterminada.asStateFlow()
 
+    /**
+     * Estado de carga para mostrar spinners
+     */
     private val _estaCargando = MutableStateFlow(false)
     val estaCargando: StateFlow<Boolean> = _estaCargando.asStateFlow()
 
+    /**
+     * Mensaje de error para mostrar en la UI
+     */
     private val _mensajeError = MutableStateFlow<String?>(null)
     val mensajeError: StateFlow<String?> = _mensajeError.asStateFlow()
 
+    /**
+     * Mensaje de éxito para mostrar en la UI
+     */
     private val _mensajeExito = MutableStateFlow<String?>(null)
     val mensajeExito: StateFlow<String?> = _mensajeExito.asStateFlow()
 
-    init {
-        cargarDireccionPredeterminada()
-    }
+    // ========== INICIALIZACIÓN ==========
 
-    /**
-     * Ya no necesitamos cargar direcciones manualmente - se hace automáticamente con stateIn
-     */
-    fun cargarDirecciones() {
-        // Las direcciones se cargan automáticamente con stateIn
-        // Este método se mantiene para compatibilidad pero ya no hace nada
+    init {
+        // Al crear el ViewModel, cargar la dirección predeterminada
+        cargarDireccionPredeterminada()
     }
 
     /**
@@ -66,7 +85,7 @@ class DireccionViewModel @Inject constructor(
     private fun cargarDireccionPredeterminada() {
         viewModelScope.launch {
             try {
-                val direccion = repository.getDireccionPredeterminadaUsuarioPrincipal()
+                val direccion = repositorio.obtenerDireccionPredeterminada()
                 _direccionPredeterminada.value = direccion
             } catch (e: Exception) {
                 _mensajeError.value = "Error al cargar dirección predeterminada: ${e.message}"
@@ -74,8 +93,15 @@ class DireccionViewModel @Inject constructor(
         }
     }
 
+    // ========== OPERACIONES CRUD ==========
+
     /**
      * Guarda una nueva dirección
+     *
+     * @param nombreCompleto nombre completo del destinatario
+     * @param telefono número de teléfono
+     * @param direccionCompleta dirección completa
+     * @param esPredeterminada si debe ser la dirección predeterminada
      */
     fun guardarDireccion(
         nombreCompleto: String,
@@ -88,20 +114,14 @@ class DireccionViewModel @Inject constructor(
                 _estaCargando.value = true
                 _mensajeError.value = null
 
-                // Validaciones básicas
-                if (nombreCompleto.isBlank()) {
-                    _mensajeError.value = "El nombre completo es requerido"
-                    return@launch
-                }
-                if (telefono.isBlank()) {
-                    _mensajeError.value = "El teléfono es requerido"
-                    return@launch
-                }
-                if (direccionCompleta.isBlank()) {
-                    _mensajeError.value = "La dirección es requerida"
+                // Validar campos obligatorios
+                val errorValidacion = validarCampos(nombreCompleto, telefono, direccionCompleta)
+                if (errorValidacion != null) {
+                    _mensajeError.value = errorValidacion
                     return@launch
                 }
 
+                // Crear nueva dirección
                 val nuevaDireccion = Direccion(
                     usuarioId = "usuario_principal",
                     nombreCompleto = nombreCompleto.trim(),
@@ -110,11 +130,14 @@ class DireccionViewModel @Inject constructor(
                     esPredeterminada = esPredeterminada
                 )
 
-                repository.guardarDireccion(nuevaDireccion)
+                // Guardar en la base de datos
+                repositorio.guardarDireccion(nuevaDireccion)
                 _mensajeExito.value = "Dirección guardada exitosamente"
 
                 // Recargar dirección predeterminada si es necesario
-                cargarDireccionPredeterminada()
+                if (esPredeterminada) {
+                    cargarDireccionPredeterminada()
+                }
 
             } catch (e: Exception) {
                 _mensajeError.value = "Error al guardar dirección: ${e.message}"
@@ -139,20 +162,14 @@ class DireccionViewModel @Inject constructor(
                 _estaCargando.value = true
                 _mensajeError.value = null
 
-                // Validaciones básicas
-                if (nombreCompleto.isBlank()) {
-                    _mensajeError.value = "El nombre completo es requerido"
-                    return@launch
-                }
-                if (telefono.isBlank()) {
-                    _mensajeError.value = "El teléfono es requerido"
-                    return@launch
-                }
-                if (direccionCompleta.isBlank()) {
-                    _mensajeError.value = "La dirección es requerida"
+                // Validar campos obligatorios
+                val errorValidacion = validarCampos(nombreCompleto, telefono, direccionCompleta)
+                if (errorValidacion != null) {
+                    _mensajeError.value = errorValidacion
                     return@launch
                 }
 
+                // Crear dirección actualizada
                 val direccionActualizada = Direccion(
                     id = direccionId,
                     usuarioId = "usuario_principal",
@@ -162,11 +179,14 @@ class DireccionViewModel @Inject constructor(
                     esPredeterminada = esPredeterminada
                 )
 
-                repository.actualizarDireccion(direccionActualizada)
+                // Actualizar en la base de datos
+                repositorio.actualizarDireccion(direccionActualizada)
                 _mensajeExito.value = "Dirección actualizada exitosamente"
 
                 // Recargar dirección predeterminada si es necesario
-                cargarDireccionPredeterminada()
+                if (esPredeterminada) {
+                    cargarDireccionPredeterminada()
+                }
 
             } catch (e: Exception) {
                 _mensajeError.value = "Error al actualizar dirección: ${e.message}"
@@ -185,10 +205,10 @@ class DireccionViewModel @Inject constructor(
                 _estaCargando.value = true
                 _mensajeError.value = null
 
-                repository.eliminarDireccion(direccionId)
+                repositorio.eliminarDireccion(direccionId)
                 _mensajeExito.value = "Dirección eliminada exitosamente"
 
-                // Recargar dirección predeterminada si es necesario
+                // Recargar dirección predeterminada por si se eliminó la predeterminada
                 cargarDireccionPredeterminada()
 
             } catch (e: Exception) {
@@ -208,7 +228,7 @@ class DireccionViewModel @Inject constructor(
                 _estaCargando.value = true
                 _mensajeError.value = null
 
-                repository.establecerDireccionPredeterminada(direccionId)
+                repositorio.establecerDireccionPredeterminada(direccionId)
                 _mensajeExito.value = "Dirección establecida como predeterminada"
 
                 // Recargar dirección predeterminada
@@ -222,12 +242,14 @@ class DireccionViewModel @Inject constructor(
         }
     }
 
+    // ========== FUNCIONES DE UTILIDAD ==========
+
     /**
-     * Obtiene una dirección por su ID
+     * Busca una dirección por su ID
      */
     suspend fun obtenerDireccionPorId(direccionId: String): Direccion? {
         return try {
-            repository.getDireccionById(direccionId)
+            repositorio.obtenerDireccionPorId(direccionId)
         } catch (e: Exception) {
             _mensajeError.value = "Error al obtener dirección: ${e.message}"
             null
@@ -248,36 +270,20 @@ class DireccionViewModel @Inject constructor(
         _mensajeExito.value = null
     }
 
+    // ========== FUNCIONES DE VALIDACIÓN ==========
+
     /**
-     * Valida el formato del teléfono
+     * Valida todos los campos de una dirección
      */
-    fun validarTelefono(telefono: String): String? {
+    private fun validarCampos(nombreCompleto: String, telefono: String, direccionCompleta: String): String? {
         return when {
+            nombreCompleto.isBlank() -> "El nombre completo es requerido"
+            nombreCompleto.length < 3 -> "El nombre debe tener al menos 3 caracteres"
             telefono.isBlank() -> "El teléfono es requerido"
             telefono.length < 10 -> "El teléfono debe tener al menos 10 dígitos"
-            !telefono.all { it.isDigit() } -> "Solo se permiten números"
-            else -> null
-        }
-    }
-
-    /**
-     * Valida el formato del nombre completo
-     */
-    fun validarNombreCompleto(nombre: String): String? {
-        return when {
-            nombre.isBlank() -> "El nombre completo es requerido"
-            nombre.length < 3 -> "El nombre debe tener al menos 3 caracteres"
-            else -> null
-        }
-    }
-
-    /**
-     * Valida el formato de la dirección
-     */
-    fun validarDireccion(direccion: String): String? {
-        return when {
-            direccion.isBlank() -> "La dirección es requerida"
-            direccion.length < 10 -> "La dirección debe tener al menos 10 caracteres"
+            !telefono.all { it.isDigit() } -> "El teléfono solo puede contener números"
+            direccionCompleta.isBlank() -> "La dirección es requerida"
+            direccionCompleta.length < 10 -> "La dirección debe tener al menos 10 caracteres"
             else -> null
         }
     }

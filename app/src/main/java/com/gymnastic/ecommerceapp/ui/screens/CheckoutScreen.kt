@@ -27,8 +27,8 @@ fun CheckoutScreen(
     onBack: () -> Unit,
     direccionViewModel: DireccionViewModel = hiltViewModel()
 ) {
-    val cartItems by cartViewModel.cartItems.collectAsState(initial = emptyList())
-    val total = cartItems.sumOf { it.productPrice * it.quantity }
+    val itemsCarrito by cartViewModel.itemsDelCarrito.collectAsState(initial = emptyList())
+    val total = itemsCarrito.sumOf { it.productPrice * it.quantity }
 
     // Estados del ViewModel de direcciones
     val direcciones by direccionViewModel.direcciones.collectAsState()
@@ -136,7 +136,7 @@ fun CheckoutScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    cartItems.forEach { item ->
+                    itemsCarrito.forEach { item ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -296,7 +296,7 @@ fun CheckoutScreen(
             Button(
                 onClick = {
                     if (validateForm()) {
-                        cartViewModel.clearCart()
+                        cartViewModel.vaciarCarrito()
                         onSuccess()
                     }
                 },

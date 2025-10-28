@@ -25,16 +25,16 @@ import com.gymnastic.ecommerceapp.utils.NativeUtils
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(
-    productId: String,
+    productoId: String,
     cartViewModel: CartViewModel,
     onGoCart: () -> Unit,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
-    val product = cartViewModel.getProductById(productId)
+    val producto = cartViewModel.obtenerProductoPorId(productoId)
     var quantity by remember { mutableStateOf(1) }
 
-    if (product == null) {
+    if (producto == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("Producto no encontrado", fontSize = 18.sp, fontWeight = FontWeight.Medium)
         }
@@ -44,7 +44,7 @@ fun DetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(product.name, fontWeight = FontWeight.Bold, fontSize = 18.sp, maxLines = 1) },
+                title = { Text(producto.name, fontWeight = FontWeight.Bold, fontSize = 18.sp, maxLines = 1) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
@@ -55,9 +55,9 @@ fun DetailScreen(
                         onClick = {
                             NativeUtils.shareProduct(
                                 context = context,
-                                productName = product.name,
-                                productDescription = product.description,
-                                productPrice = product.price
+                                productName = producto.name,
+                                productDescription = producto.description,
+                                productPrice = producto.price
                             )
                         }
                     ) {
@@ -75,8 +75,8 @@ fun DetailScreen(
         ) {
             // Imagen del producto
             AsyncImage(
-                model = ImageRequest.Builder(context).data(product.imageUrl).build(),
-                contentDescription = product.name,
+                model = ImageRequest.Builder(context).data(producto.imageUrl).build(),
+                contentDescription = producto.name,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(300.dp)
@@ -88,12 +88,12 @@ fun DetailScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                Text(product.name, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Text(producto.name, fontSize = 24.sp, fontWeight = FontWeight.Bold)
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    "$${String.format("%.2f", product.price)}",
+                    "$${String.format("%.2f", producto.price)}",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -105,7 +105,7 @@ fun DetailScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text(product.description, fontSize = 16.sp, lineHeight = 24.sp)
+                Text(producto.description, fontSize = 16.sp, lineHeight = 24.sp)
 
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -140,7 +140,7 @@ fun DetailScreen(
                 // Botones de acción
                 Button(
                     onClick = {
-                        cartViewModel.addToCartWithQuantity(product, quantity)
+                        cartViewModel.agregarAlCarritoConCantidad(producto, quantity)
                         NativeUtils.vibrateOnAddToCart(context)
                     },
                     modifier = Modifier.fillMaxWidth().height(56.dp)

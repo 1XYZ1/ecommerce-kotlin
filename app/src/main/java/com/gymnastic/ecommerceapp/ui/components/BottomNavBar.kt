@@ -13,36 +13,41 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /**
- * Componente de navegación inferior (Bottom Navigation Bar)
+ * Componente de navegación inferior simplificado para estudiantes
  *
  * Este componente proporciona navegación entre las pantallas principales de la app:
- * - Inicio: Pantalla principal con productos destacados
- * - Búsqueda: Pantalla de búsqueda de productos
+ * - Inicio: Pantalla principal con productos y búsqueda integrada
  * - Carrito: Pantalla del carrito de compras
- * - Perfil: Pantalla de perfil del usuario
+ * - Perfil: Pantalla de perfil del usuario con gestión de direcciones
  *
- * Utiliza Material Design 3 con el esquema de colores azul/naranja de la app.
- * Incluye un badge en el carrito para mostrar la cantidad de items.
+ * Se simplificó eliminando el botón de búsqueda ya que ahora la búsqueda
+ * está integrada en la pantalla de inicio.
+ *
+ * CONCEPTOS IMPORTANTES PARA ESTUDIANTES:
+ * - NavigationBar: Componente de Material Design 3 para navegación inferior
+ * - Badge: Indicador visual que muestra la cantidad de items en el carrito
+ * - MaterialTheme: Sistema de colores y estilos de Material Design
  */
 @Composable
 fun BottomNavBar(
-    currentRoute: String,
+    rutaActual: String,
     onNavigate: (String) -> Unit,
-    cartItemCount: Int
+    cantidadItemsCarrito: Int
 ) {
-    // Definir las rutas y sus iconos
-    val bottomNavItems = listOf(
+    // ========== CONFIGURACIÓN DE ITEMS ==========
+
+    /**
+     * Lista de items de navegación simplificada
+     *
+     * Solo incluye las pantallas principales: Inicio, Carrito y Perfil.
+     * La búsqueda ahora está integrada en la pantalla de inicio.
+     */
+    val itemsNavegacion = listOf(
         BottomNavItem(
             route = "home",
             label = "Inicio",
             icon = Icons.Default.Home,
             selectedIcon = Icons.Default.Home
-        ),
-        BottomNavItem(
-            route = "search",
-            label = "Buscar",
-            icon = Icons.Default.Search,
-            selectedIcon = Icons.Default.Search
         ),
         BottomNavItem(
             route = "cart",
@@ -58,31 +63,39 @@ fun BottomNavBar(
         )
     )
 
+    // ========== UI ==========
+
+    /**
+     * Barra de navegación inferior
+     *
+     * Utiliza Material Design 3 con colores del tema actual.
+     */
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface,
         contentColor = MaterialTheme.colorScheme.onSurface
     ) {
-        bottomNavItems.forEach { item ->
+        itemsNavegacion.forEach { item ->
             NavigationBarItem(
                 icon = {
                     Box {
+                        // Icono principal del item
                         Icon(
-                            imageVector = if (currentRoute == item.route) item.selectedIcon else item.icon,
+                            imageVector = if (rutaActual == item.route) item.selectedIcon else item.icon,
                             contentDescription = item.label,
-                            tint = if (currentRoute == item.route) {
+                            tint = if (rutaActual == item.route) {
                                 MaterialTheme.colorScheme.primary
                             } else {
                                 MaterialTheme.colorScheme.onSurfaceVariant
                             }
                         )
 
-                        // Mostrar badge en el carrito si hay items
-                        if (item.route == "cart" && cartItemCount > 0) {
+                        // Badge para mostrar cantidad de items en el carrito
+                        if (item.route == "cart" && cantidadItemsCarrito > 0) {
                             Badge(
                                 modifier = Modifier.align(Alignment.TopEnd)
                             ) {
                                 Text(
-                                    text = cartItemCount.toString(),
+                                    text = cantidadItemsCarrito.toString(),
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -94,15 +107,15 @@ fun BottomNavBar(
                     Text(
                         text = item.label,
                         fontSize = 12.sp,
-                        fontWeight = if (currentRoute == item.route) FontWeight.Medium else FontWeight.Normal,
-                        color = if (currentRoute == item.route) {
+                        fontWeight = if (rutaActual == item.route) FontWeight.Medium else FontWeight.Normal,
+                        color = if (rutaActual == item.route) {
                             MaterialTheme.colorScheme.primary
                         } else {
                             MaterialTheme.colorScheme.onSurfaceVariant
                         }
                     )
                 },
-                selected = currentRoute == item.route,
+                selected = rutaActual == item.route,
                 onClick = {
                     onNavigate(item.route)
                 },
@@ -119,11 +132,12 @@ fun BottomNavBar(
 }
 
 /**
- * Clase de datos para representar un item de la navegación inferior
- * @param route ruta de navegación
- * @param label texto del item
- * @param icon icono cuando no está seleccionado
- * @param selectedIcon icono cuando está seleccionado
+ * Clase de datos simple para representar un item de navegación
+ *
+ * @param route ruta de navegación (debe coincidir con Routes)
+ * @param label texto que se muestra al usuario
+ * @param icon icono cuando el item no está seleccionado
+ * @param selectedIcon icono cuando el item está seleccionado
  */
 data class BottomNavItem(
     val route: String,

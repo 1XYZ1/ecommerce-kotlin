@@ -36,8 +36,8 @@ fun ProfileScreen(
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
     // Estados del ViewModel
-    val userInfo by authViewModel.userInfo.collectAsState()
-    val isLoading by authViewModel.isLoading.collectAsState()
+    val infoUsuario by authViewModel.infoUsuario.collectAsState()
+    val estaCargando by authViewModel.estaCargando.collectAsState()
 
     // Estado para mostrar diálogo de confirmación de logout
     var showLogoutDialog by remember { mutableStateOf(false) }
@@ -86,7 +86,7 @@ fun ProfileScreen(
 
                 // Información del usuario
                 Text(
-                    text = userInfo.name.ifEmpty { "Usuario" },
+                    text = infoUsuario.nombre.ifEmpty { "Usuario" },
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -94,7 +94,7 @@ fun ProfileScreen(
                 )
 
                 Text(
-                    text = userInfo.email.ifEmpty { "usuario@email.com" },
+                    text = infoUsuario.email.ifEmpty { "usuario@email.com" },
                     fontSize = 16.sp,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                     textAlign = TextAlign.Center
@@ -137,7 +137,7 @@ fun ProfileScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = userInfo.name.ifEmpty { "No especificado" },
+                            text = infoUsuario.nombre.ifEmpty { "No especificado" },
                             fontSize = 16.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -164,7 +164,7 @@ fun ProfileScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = userInfo.email.ifEmpty { "No especificado" },
+                            text = infoUsuario.email.ifEmpty { "No especificado" },
                             fontSize = 16.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -307,7 +307,7 @@ fun ProfileScreen(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer
                     ),
-                    enabled = !isLoading
+                    enabled = !estaCargando
                 ) {
                     Icon(
                         imageVector = Icons.Default.ExitToApp,
@@ -347,7 +347,7 @@ fun ProfileScreen(
                 TextButton(
                     onClick = {
                         showLogoutDialog = false
-                        authViewModel.logout()
+                        authViewModel.cerrarSesion()
                         onLogout()
                     }
                 ) {

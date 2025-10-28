@@ -11,30 +11,36 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * ViewModel para manejar la lógica del carrito de compras
+ * ViewModel simplificado para manejar el carrito de compras
  *
- * Un ViewModel es una clase que mantiene la lógica de la UI y los datos
- * de forma independiente de los cambios de configuración (como rotación de pantalla).
- *
- * En este caso, encapsula todas las operaciones relacionadas con el carrito:
+ * Este ViewModel maneja todas las operaciones relacionadas con el carrito:
  * - Agregar productos
  * - Eliminar productos
  * - Actualizar cantidades
- * - Obtener el estado actual del carrito
+ * - Vaciar carrito
+ * - Obtener productos disponibles
+ *
+ * CONCEPTOS IMPORTANTES PARA ESTUDIANTES:
+ * - Flow: Stream de datos que se actualiza automáticamente cuando cambian los datos
+ * - viewModelScope: Scope de corrutinas que se cancela cuando el ViewModel se destruye
+ * - suspend functions: Funciones que pueden pausarse y reanudarse (operaciones de BD)
  */
 @HiltViewModel
 class CartViewModel @Inject constructor(
-    private val repository: Repository
+    private val repositorio: Repository
 ) : ViewModel() {
 
+    // ========== ESTADOS OBSERVABLES ==========
+
     /**
-     * Flow que emite la lista actual de ítems en el carrito
+     * Flow que emite la lista actual de items en el carrito
      *
-     * Flow es un stream de datos reactivo que se actualiza automáticamente
-     * cuando cambian los datos en la base de datos Room.
-     * La UI puede observar este Flow y actualizarse automáticamente.
+     * La UI puede observar este Flow y actualizarse automáticamente
+     * cuando cambien los items del carrito en la base de datos.
      */
-    val cartItems: Flow<List<CartItem>> = repository.getAllCartItems()
+    val itemsDelCarrito: Flow<List<CartItem>> = repositorio.obtenerItemsDelCarrito()
+
+    // ========== OPERACIONES DEL CARRITO ==========
 
     /**
      * Agrega un producto al carrito
@@ -42,24 +48,28 @@ class CartViewModel @Inject constructor(
      * Si el producto ya existe en el carrito, incrementa la cantidad.
      * Si no existe, lo agrega con cantidad 1.
      *
-     * @param product El producto a agregar al carrito
+     * @param producto El producto a agregar al carrito
      */
-    fun addToCart(product: Product) {
+    fun agregarAlCarrito(producto: Product) {
         viewModelScope.launch {
-            repository.addToCart(product)
+            repositorio.agregarAlCarrito(producto)
         }
     }
 
     /**
      * Agrega un producto al carrito con una cantidad específica
      *
-     * @param product El producto a agregar
-     * @param quantity La cantidad a agregar
+     * Útil cuando el usuario selecciona una cantidad específica
+     * desde la pantalla de detalles del producto.
+     *
+     * @param producto El producto a agregar
+     * @param cantidad La cantidad a agregar
      */
-    fun addToCartWithQuantity(product: Product, quantity: Int) {
+    fun agregarAlCarritoConCantidad(producto: Product, cantidad: Int) {
         viewModelScope.launch {
-            repeat(quantity) {
-                repository.addToCart(product)
+            // Repetir la operación de agregar según la cantidad solicitada
+            repeat(cantidad) {
+                repositorio.agregarAlCarrito(producto)
             }
         }
     }
@@ -69,42 +79,55 @@ class CartViewModel @Inject constructor(
      *
      * Si la cantidad es 0 o menor, elimina el producto del carrito.
      *
-     * @param productId ID del producto a actualizar
-     * @param quantity Nueva cantidad
+     * @param idProducto ID del producto a actualizar
+     * @param cantidad Nueva cantidad
      */
-    fun updateQuantity(productId: String, quantity: Int) {
+    fun actualizarCantidad(idProducto: String, cantidad: Int) {
         viewModelScope.launch {
-            repository.updateCartItemQuantity(productId, quantity)
+            repositorio.actualizarCantidadEnCarrito(idProducto, cantidad)
         }
     }
 
     /**
      * Elimina completamente un producto del carrito
      *
-     * @param productId ID del producto a eliminar
+     * @param idProducto ID del producto a eliminar
      */
-    fun removeFromCart(productId: String) {
+    fun eliminarDelCarrito(idProducto: String) {
         viewModelScope.launch {
-            repository.removeFromCart(productId)
+            repositorio.eliminarDelCarrito(idProducto)
         }
     }
 
     /**
-     * Limpia todo el carrito (se usa después de completar una compra)
+     * Vacía completamente el carrito
+     *
+     * Se usa después de completar una compra exitosa.
      */
-    fun clearCart() {
+    fun vaciarCarrito() {
         viewModelScope.launch {
-            repository.clearCart()
+            repositorio.vaciarCarrito()
         }
     }
 
+    // ========== OPERACIONES DE PRODUCTOS ==========
+
     /**
-     * Obtiene un producto por su ID
+     * Busca un producto por su ID
+     *
+     * @param idProducto ID del producto a buscar
+     * @return El producto encontrado o null si no existe
      */
-    fun getProductById(productId: String) = repository.getProductById(productId)
+    fun obtenerProductoPorId(idProducto: String): Product? {
+        return repositorio.obtenerProductoPorId(idProducto)
+    }
 
     /**
      * Obtiene todos los productos disponibles
+     *
+     * @return Lista de todos los productos en el catálogo
      */
-    fun getAllProducts() = repository.getAllProducts()
+    fun obtenerTodosLosProductos(): List<Product> {
+        return repositorio.obtenerTodosLosProductos()
+    }
 }

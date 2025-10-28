@@ -26,8 +26,8 @@ fun SuccessScreen(
     onBackHome: () -> Unit
 ) {
     val context = LocalContext.current
-    val cartItems by cartViewModel.cartItems.collectAsState(initial = emptyList())
-    val total = cartItems.sumOf { it.productPrice * it.quantity }
+    val itemsCarrito by cartViewModel.itemsDelCarrito.collectAsState(initial = emptyList())
+    val total = itemsCarrito.sumOf { it.productPrice * it.quantity }
 
     var isVisible by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
