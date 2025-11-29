@@ -663,17 +663,20 @@ SearchScreen → SearchQuery → FilterProducts → DisplayResults → DetailScr
 La aplicación utiliza una paleta de colores inspirada en shadcn/ui, con tonos neutros y acentos profesionales:
 
 #### Colores Neutros (Base Zinc)
+
 ```kotlin
 Zinc50 a Zinc950   // Escala de grises neutros
 Slate400 a Slate900 // Tonos slate para acentos
 ```
 
 #### Colores de Acento
+
 ```kotlin
 Blue400 a Blue800  // Azul profesional como color primario
 ```
 
 #### Colores Semánticos
+
 ```kotlin
 Green50-700   // Para mensajes de éxito
 Red50-700     // Para errores y acciones destructivas
@@ -683,6 +686,7 @@ Yellow50-700  // Para advertencias
 ### Sistema Tipográfico
 
 Tipografía completa basada en Material Design 3:
+
 - **Display**: Large, Medium, Small (títulos grandes)
 - **Headline**: Large, Medium, Small (encabezados)
 - **Title**: Large, Medium, Small (títulos de sección)
@@ -692,6 +696,7 @@ Tipografía completa basada en Material Design 3:
 ### Sistema de Espaciado
 
 Espaciado consistente usando `AppDimensions`:
+
 ```kotlin
 spaceXXS: 2dp    spaceXS: 4dp     spaceS: 8dp
 spaceM: 12dp     spaceNormal: 16dp spaceL: 24dp
@@ -716,6 +721,7 @@ cornerL: 16dp    cornerXL: 24dp   cornerFull: 999dp
 ### 1. **Feedback al Agregar al Carrito** ✅
 
 **Implementación:**
+
 - `Snackbar` con mensaje "Producto agregado al carrito"
 - Botón de acción "Ver carrito" en el Snackbar
 - Vibración háptica sutil al agregar
@@ -726,6 +732,7 @@ cornerL: 16dp    cornerXL: 24dp   cornerFull: 999dp
 ### 2. **Confirmación al Eliminar del Carrito** ✅
 
 **Implementación:**
+
 - Dialog de confirmación antes de eliminar items
 - Mensaje claro: "¿Estás seguro de que deseas eliminar [producto]?"
 - Botones diferenciados: "Cancelar" y "Eliminar"
@@ -736,6 +743,7 @@ cornerL: 16dp    cornerXL: 24dp   cornerFull: 999dp
 ### 3. **Búsqueda Mejorada** ✅
 
 **Implementación:**
+
 - Botón "X" para limpiar búsqueda rápidamente
 - Aparece solo cuando hay texto en el campo
 - Búsqueda en tiempo real mientras escribes
@@ -746,6 +754,7 @@ cornerL: 16dp    cornerXL: 24dp   cornerFull: 999dp
 ### 4. **Animaciones de Botones** ✅
 
 **Implementación:**
+
 - Efecto de presión con escala 0.95
 - Duración de 100ms para transición suave
 - Aplicado a todos los botones principales
@@ -756,6 +765,7 @@ cornerL: 16dp    cornerXL: 24dp   cornerFull: 999dp
 ### 5. **Indicador de Progreso en Checkout** ✅
 
 **Implementación:**
+
 - Stepper visual con 3 pasos: "Carrito → Datos → Confirmación"
 - Círculos numerados con estados (completado/activo/pendiente)
 - Checkmarks (✓) para pasos completados
@@ -768,6 +778,7 @@ cornerL: 16dp    cornerXL: 24dp   cornerFull: 999dp
 ### 6. **Modo Oscuro con Toggle Persistente** ✅
 
 **Implementación:**
+
 - Toggle en `ProfileScreen` para cambiar tema
 - Persistencia con DataStore (mantiene preferencia entre sesiones)
 - Tema oscuro completo con paleta adaptada
@@ -780,24 +791,30 @@ cornerL: 16dp    cornerXL: 24dp   cornerFull: 999dp
 ### 7. **Componentes Reutilizables Profesionales** ✅
 
 **Botones:**
+
 - `PrimaryButton`, `SecondaryButton`, `OutlineButton`
 - `DestructiveButton`, `GhostButton`, `SmallButton`
 
 **Text Fields:**
+
 - `AppOutlinedTextField`, `AppTextField`, `SearchTextField`
 - Soporte para iconos, errores, estados disabled
 
 **Cards:**
+
 - `AppCard`, `ElevatedAppCard`, `OutlinedAppCard`, `InfoCard`
 
 **Dialogs:**
+
 - `ConfirmDialog`, `InfoDialog`, `CustomDialog`
 
 **Estados:**
+
 - `LoadingScreen`, `LoadingIndicator`, `EmptyState`
 - `NoSearchResults`, `EmptyCart`, `CompactEmptyState`
 
 **Badges:**
+
 - `CountBadge`, `StatusBadge`
 
 ---
@@ -928,6 +945,7 @@ Esta aplicación fue simplificada específicamente para estudiantes, manteniendo
 ## 🎯 Resumen de Características
 
 ### Funcionalidades Core
+
 ✅ Autenticación completa (Login/Registro/Logout)
 ✅ Catálogo de productos con búsqueda integrada
 ✅ Carrito de compras persistente
@@ -936,6 +954,7 @@ Esta aplicación fue simplificada específicamente para estudiantes, manteniendo
 ✅ Perfil de usuario con configuraciones
 
 ### Mejoras de UX
+
 ✅ Snackbar feedback al agregar al carrito
 ✅ Confirmación antes de eliminar items
 ✅ Botón para limpiar búsqueda
@@ -946,6 +965,7 @@ Esta aplicación fue simplificada específicamente para estudiantes, manteniendo
 ✅ Diseño inspirado en shadcn/ui
 
 ### Tecnologías Utilizadas
+
 ✅ **Jetpack Compose** - UI declarativa moderna
 ✅ **Material Design 3** - Sistema de diseño
 ✅ **Room Database** - Persistencia local
@@ -956,6 +976,7 @@ Esta aplicación fue simplificada específicamente para estudiantes, manteniendo
 ✅ **Coroutines** - Programación asíncrona
 
 ### Código Limpio
+
 ✅ Variables y funciones en español
 ✅ Comentarios educativos extensos
 ✅ Arquitectura MVVM clara

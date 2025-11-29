@@ -35,6 +35,11 @@ object Routes {
 
     // ========== RUTAS DE DIRECCIONES ==========
     const val SAVED_ADDRESSES = "saved_addresses"
+
+    // ========== RUTAS DE ADMIN ==========
+    const val ADMIN_PRODUCTS = "admin_products"
+    const val ADMIN_PRODUCT_CREATE = "admin_product_create"
+    const val ADMIN_PRODUCT_EDIT = "admin_product_edit/{productId}"
 }
 
 /**
@@ -56,26 +61,27 @@ fun NavGraph(
     cartViewModel: CartViewModel,
     authViewModel: com.gymnastic.ecommerceapp.ui.viewmodels.AuthViewModel
 ) {
+    android.util.Log.d("NavGraph", "NavGraph creado con authViewModel: $authViewModel")
+
     // ========== OBSERVAR ESTADO DE AUTENTICACIÓN ==========
 
     /**
      * Observar si el usuario está logueado
-     *
-     * Cuando cambia este estado, navegamos automáticamente a la pantalla
-     * correspondiente (HOME si está logueado, LOGIN si no).
      */
     val estaLogueado by authViewModel.estaLogueado.collectAsState()
 
+    // Log del estado de autenticación
+    LaunchedEffect(estaLogueado) {
+        android.util.Log.d("NavGraph", "Estado estaLogueado cambió a: $estaLogueado")
+    }
+
     /**
-     * Efecto para navegar automáticamente según el estado de login
-     *
-     * LaunchedEffect se ejecuta cuando cambia el valor de estaLogueado.
-     * Si el usuario está logueado, navega a HOME y limpia el stack.
+     * Navegar automáticamente a HOME si está autenticado
+     * Solo se ejecuta cuando cambia estaLogueado de false a true (login exitoso)
      */
     LaunchedEffect(estaLogueado) {
-        if (estaLogueado) {
+        if (estaLogueado && navController.currentDestination?.route == Routes.LOGIN) {
             navController.navigate(Routes.HOME) {
-                // Limpiar todo el stack hasta LOGIN (incluyendo LOGIN)
                 popUpTo(Routes.LOGIN) { inclusive = true }
             }
         }
@@ -104,7 +110,8 @@ fun NavGraph(
                     navController.navigate(Routes.HOME) {
                         popUpTo(Routes.LOGIN) { inclusive = true }
                     }
-                }
+                },
+                authViewModel = authViewModel // Pasar el ViewModel compartido
             )
         }
 
@@ -117,7 +124,8 @@ fun NavGraph(
                     navController.navigate(Routes.HOME) {
                         popUpTo(Routes.REGISTER) { inclusive = true }
                     }
-                }
+                },
+                authViewModel = authViewModel // Pasar el ViewModel compartido
             )
         }
 
@@ -153,7 +161,11 @@ fun NavGraph(
                 },
                 onNavigateToDirecciones = {
                     navController.navigate(Routes.SAVED_ADDRESSES)
-                }
+                },
+                onNavigateToAdmin = {
+                    navController.navigate(Routes.ADMIN_PRODUCTS)
+                },
+                authViewModel = authViewModel // Pasar el ViewModel compartido
             )
         }
 
@@ -213,6 +225,34 @@ fun NavGraph(
                 onBack = {
                     navController.popBackStack()
                 }
+            )
+        }
+
+        // ========== PANTALLAS DE ADMIN ==========
+
+        composable(Routes.ADMIN_PRODUCTS) {
+            AdminProductListScreen(
+                navController = navController
+            )
+        }
+
+        composable(Routes.ADMIN_PRODUCT_CREATE) {
+            AdminProductFormScreen(
+                navController = navController,
+                productId = null
+            )
+        }
+
+        composable(
+            route = Routes.ADMIN_PRODUCT_EDIT,
+            arguments = listOf(
+                navArgument("productId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val productId = backStackEntry.arguments?.getString("productId")
+            AdminProductFormScreen(
+                navController = navController,
+                productId = productId
             )
         }
     }

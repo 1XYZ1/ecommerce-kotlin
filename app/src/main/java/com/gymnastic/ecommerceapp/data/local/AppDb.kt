@@ -6,14 +6,14 @@ import androidx.room.RoomDatabase
 import android.content.Context
 
 @Database(
-    entities = [CartItem::class, Usuario::class, Direccion::class],
-    version = 1,
+    entities = [CartItem::class, Direccion::class, ProductEntity::class],
+    version = 2,
     exportSchema = false
 )
 abstract class AppDb : RoomDatabase() {
     abstract fun cartDao(): CartDao
-    abstract fun usuarioDao(): UsuarioDao
     abstract fun direccionDao(): DireccionDao
+    abstract fun productDao(): ProductDao
 
     companion object {
         @Volatile
@@ -24,7 +24,7 @@ abstract class AppDb : RoomDatabase() {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDb::class.java,
-                    "ecommerce_database_v2" // Cambiar nombre para evitar conflictos
+                    "ecommerce_database_v3" // Nueva versión sin Usuario en Room
                 )
                 .fallbackToDestructiveMigration()
                 .allowMainThreadQueries() // Permitir queries en main thread temporalmente

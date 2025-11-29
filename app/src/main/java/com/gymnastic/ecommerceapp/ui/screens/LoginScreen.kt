@@ -30,8 +30,9 @@ import com.gymnastic.ecommerceapp.ui.viewmodels.AuthViewModel
 fun LoginScreen(
     onNavigateToRegister: () -> Unit,
     onLoginSuccess: () -> Unit,
-    authViewModel: AuthViewModel = hiltViewModel()
+    authViewModel: AuthViewModel // Recibir como parámetro, no crear nueva instancia
 ) {
+    android.util.Log.d("LoginScreen", "LoginScreen usando authViewModel: $authViewModel")
     // Estados locales
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }

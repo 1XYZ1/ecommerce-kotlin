@@ -59,22 +59,42 @@ fun HomeScreen(
 
     /**
      * Lista completa de productos disponibles
+     * ACTUALIZADO: Ahora se carga desde API de forma asíncrona
      */
-    val todosLosProductos = cartViewModel.obtenerTodosLosProductos()
+    var todosLosProductos by remember { mutableStateOf<List<Product>>(emptyList()) }
+    var estaCargandoProductos by remember { mutableStateOf(true) }
+    var mensajeError by remember { mutableStateOf<String?>(null) }
+
+    // Cargar productos al iniciar la pantalla
+    LaunchedEffect(Unit) {
+        estaCargandoProductos = true
+        try {
+            todosLosProductos = cartViewModel.obtenerTodosLosProductos()
+            if (todosLosProductos.isEmpty()) {
+                mensajeError = "No se pudieron cargar los productos"
+            }
+        } catch (e: Exception) {
+            mensajeError = "Error al cargar productos: ${e.message}"
+        } finally {
+            estaCargandoProductos = false
+        }
+    }
+
+    // Mostrar error si hay
+    LaunchedEffect(mensajeError) {
+        mensajeError?.let {
+            snackbarHostState.showSnackbar(it)
+        }
+    }
 
     /**
      * Lista filtrada de productos basada en la búsqueda
-     *
-     * derivedStateOf calcula este valor solo cuando cambia textoBusqueda.
-     * Es más eficiente que usar remember con un key.
      */
     val productosFiltrados by remember {
         derivedStateOf {
             if (textoBusqueda.isBlank()) {
-                // Si no hay texto de búsqueda, mostrar todos los productos
                 todosLosProductos
             } else {
-                // Filtrar productos que contengan el texto de búsqueda en el nombre o descripción
                 todosLosProductos.filter { producto ->
                     producto.name.contains(textoBusqueda, ignoreCase = true) ||
                     producto.description.contains(textoBusqueda, ignoreCase = true)
@@ -152,7 +172,15 @@ fun HomeScreen(
 
             // ========== GRID DE PRODUCTOS ==========
 
-            if (productosFiltrados.isEmpty() && textoBusqueda.isNotBlank()) {
+            // Mostrar indicador de carga mientras se obtienen productos
+            if (estaCargandoProductos) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else if (productosFiltrados.isEmpty() && textoBusqueda.isNotBlank()) {
                 // Mostrar mensaje cuando no hay resultados
                 Box(
                     modifier = Modifier.fillMaxSize(),

@@ -34,8 +34,23 @@ fun DetailScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
-    val producto = cartViewModel.obtenerProductoPorId(productoId)
+    var producto by remember { mutableStateOf<com.gymnastic.ecommerceapp.domain.Product?>(null) }
+    var estaCargando by remember { mutableStateOf(true) }
     var quantity by remember { mutableStateOf(1) }
+
+    // Cargar producto de forma asíncrona
+    LaunchedEffect(productoId) {
+        estaCargando = true
+        producto = cartViewModel.obtenerProductoPorId(productoId)
+        estaCargando = false
+    }
+
+    if (estaCargando) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
 
     if (producto == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -44,10 +59,12 @@ fun DetailScreen(
         return
     }
 
+    val productoActual = producto ?: return
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(producto.name, fontWeight = FontWeight.Bold, fontSize = 18.sp, maxLines = 1) },
+                title = { Text(productoActual.name, fontWeight = FontWeight.Bold, fontSize = 18.sp, maxLines = 1) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
@@ -58,9 +75,9 @@ fun DetailScreen(
                         onClick = {
                             NativeUtils.shareProduct(
                                 context = context,
-                                productName = producto.name,
-                                productDescription = producto.description,
-                                productPrice = producto.price
+                                productName = productoActual.name,
+                                productDescription = productoActual.description,
+                                productPrice = productoActual.price
                             )
                         }
                     ) {
@@ -78,8 +95,8 @@ fun DetailScreen(
         ) {
             // Imagen del producto
             AsyncImage(
-                model = ImageRequest.Builder(context).data(producto.imageUrl).build(),
-                contentDescription = producto.name,
+                model = ImageRequest.Builder(context).data(productoActual.imageUrl).build(),
+                contentDescription = productoActual.name,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(300.dp)
@@ -91,12 +108,12 @@ fun DetailScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                Text(producto.name, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Text(productoActual.name, fontSize = 24.sp, fontWeight = FontWeight.Bold)
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    "$${String.format("%.2f", producto.price)}",
+                    "$${String.format("%.2f", productoActual.price)}",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -108,7 +125,7 @@ fun DetailScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text(producto.description, fontSize = 16.sp, lineHeight = 24.sp)
+                Text(productoActual.description, fontSize = 16.sp, lineHeight = 24.sp)
 
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -143,7 +160,7 @@ fun DetailScreen(
                 // Botones de acción
                 PrimaryButton(
                     onClick = {
-                        cartViewModel.agregarAlCarritoConCantidad(producto, quantity)
+                        cartViewModel.agregarAlCarritoConCantidad(productoActual, quantity)
                         NativeUtils.vibrateOnAddToCart(context)
                     },
                     text = "Agregar al carrito",

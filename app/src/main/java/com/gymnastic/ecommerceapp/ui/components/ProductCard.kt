@@ -44,6 +44,17 @@ fun ProductCard(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(product.imageUrl)
                     .crossfade(true)
+                    .listener(
+                        onStart = {
+                            android.util.Log.d("ProductCard", "Cargando imagen: ${product.imageUrl}")
+                        },
+                        onSuccess = { _, _ ->
+                            android.util.Log.d("ProductCard", "Imagen cargada exitosamente: ${product.imageUrl}")
+                        },
+                        onError = { _, result ->
+                            android.util.Log.e("ProductCard", "Error al cargar imagen: ${product.imageUrl}", result.throwable)
+                        }
+                    )
                     .build(),
                 contentDescription = product.name,
                 modifier = Modifier

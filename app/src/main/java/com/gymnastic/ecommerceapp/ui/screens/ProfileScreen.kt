@@ -9,48 +9,42 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.gymnastic.ecommerceapp.data.local.ThemePreferences
 import com.gymnastic.ecommerceapp.ui.components.DestructiveButton
 import com.gymnastic.ecommerceapp.ui.viewmodels.AuthViewModel
-import kotlinx.coroutines.launch
 
 /**
- * Pantalla de perfil del usuario
+ * Pantalla de perfil SIMPLIFICADA
  *
- * Esta pantalla muestra la información del usuario logueado y permite:
- * - Ver información personal (nombre, email)
- * - Acceder a configuraciones
- * - Cerrar sesión
- * - Ver estadísticas básicas
- *
- * Utiliza Material Design 3 con el esquema de colores azul/naranja de la app.
- * Incluye un diseño limpio con cards para organizar la información.
+ * Solo muestra:
+ * - Información básica del usuario (nombre, email)
+ * - Botón de administración (solo si es admin)
+ * - Botón de cerrar sesión
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     onLogout: () -> Unit,
-    onNavigateToDirecciones: () -> Unit,
-    authViewModel: AuthViewModel = hiltViewModel()
+    onNavigateToDirecciones: () -> Unit = {},
+    onNavigateToAdmin: () -> Unit = {},
+    authViewModel: AuthViewModel // Recibir como parámetro, no crear nueva instancia
 ) {
-    // Estados del ViewModel
+    android.util.Log.d("ProfileScreen", "ProfileScreen usando authViewModel: $authViewModel")
     val infoUsuario by authViewModel.infoUsuario.collectAsState()
-    val estaCargando by authViewModel.estaCargando.collectAsState()
-
-    // Estado para mostrar diálogo de confirmación de logout
     var showLogoutDialog by remember { mutableStateOf(false) }
 
-    // Preferencias de tema
-    val context = LocalContext.current
-    val themePreferences = remember { ThemePreferences(context) }
-    val isDarkTheme by themePreferences.isDarkTheme.collectAsState(initial = false)
-    val scope = rememberCoroutineScope()
+    // Log para debug
+    LaunchedEffect(infoUsuario) {
+        android.util.Log.d("ProfileScreen", "infoUsuario actualizado:")
+        android.util.Log.d("ProfileScreen", "  nombre: ${infoUsuario.nombre}")
+        android.util.Log.d("ProfileScreen", "  email: ${infoUsuario.email}")
+        android.util.Log.d("ProfileScreen", "  estaLogueado: ${infoUsuario.estaLogueado}")
+        android.util.Log.d("ProfileScreen", "  esAdmin: ${infoUsuario.esAdmin}")
+    }
 
     Column(
         modifier = Modifier
@@ -76,7 +70,6 @@ fun ProfileScreen(
                 // Avatar del usuario
                 Card(
                     modifier = Modifier.size(80.dp),
-                    shape = CardDefaults.shape,
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.primary
                     )
@@ -94,7 +87,7 @@ fun ProfileScreen(
                     }
                 }
 
-                // Información del usuario
+                // Nombre del usuario
                 Text(
                     text = infoUsuario.nombre.ifEmpty { "Usuario" },
                     fontSize = 24.sp,
@@ -103,6 +96,7 @@ fun ProfileScreen(
                     textAlign = TextAlign.Center
                 )
 
+                // Email
                 Text(
                     text = infoUsuario.email.ifEmpty { "usuario@email.com" },
                     fontSize = 16.sp,
@@ -125,11 +119,10 @@ fun ProfileScreen(
                 Text(
                     text = "Información Personal",
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    fontWeight = FontWeight.Medium
                 )
 
-                // Item de nombre
+                // Nombre
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -137,7 +130,7 @@ fun ProfileScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Person,
-                        contentDescription = "Nombre",
+                        contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Column {
@@ -148,15 +141,14 @@ fun ProfileScreen(
                         )
                         Text(
                             text = infoUsuario.nombre.ifEmpty { "No especificado" },
-                            fontSize = 16.sp,
-                            color = MaterialTheme.colorScheme.onSurface
+                            fontSize = 16.sp
                         )
                     }
                 }
 
                 Divider()
 
-                // Item de email
+                // Email
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -164,7 +156,7 @@ fun ProfileScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Email,
-                        contentDescription = "Email",
+                        contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Column {
@@ -175,157 +167,73 @@ fun ProfileScreen(
                         )
                         Text(
                             text = infoUsuario.email.ifEmpty { "No especificado" },
-                            fontSize = 16.sp,
-                            color = MaterialTheme.colorScheme.onSurface
+                            fontSize = 16.sp
                         )
                     }
                 }
             }
         }
 
-        // Sección de configuración
-        Card(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+        // Botón de administración (solo si es admin)
+        if (infoUsuario.esAdmin) {
+            Card(
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "Configuración",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                // Item de notificaciones
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = "Notificaciones",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "Notificaciones",
-                            fontSize = 16.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    Switch(
-                        checked = true, // Por ahora siempre activado
-                        onCheckedChange = { /* TODO: Implementar toggle de notificaciones */ }
+                    Text(
+                        text = "Administración",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(bottom = 12.dp)
                     )
-                }
 
-                Divider()
-
-                // Item de direcciones guardadas
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.LocationOn,
-                            contentDescription = "Direcciones",
-                            tint = MaterialTheme.colorScheme.primary
+                    Button(
+                        onClick = onNavigateToAdmin,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondary
                         )
-                        Text(
-                            text = "Mis Direcciones",
-                            fontSize = 16.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    IconButton(
-                        onClick = onNavigateToDirecciones
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowRight,
-                            contentDescription = "Ir a direcciones",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-
-                Divider()
-
-                // Item de tema oscuro
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = "Tema",
-                            tint = MaterialTheme.colorScheme.primary
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
                         )
-                        Text(
-                            text = "Tema oscuro",
-                            fontSize = 16.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Administrar Productos")
                     }
-                    Switch(
-                        checked = isDarkTheme,
-                        onCheckedChange = { isChecked ->
-                            scope.launch {
-                                themePreferences.setDarkTheme(isChecked)
-                            }
-                        }
-                    )
                 }
             }
         }
 
-        // Sección de acciones
+        // Botón de cerrar sesión
         Card(
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(16.dp)
             ) {
                 Text(
                     text = "Acciones",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    modifier = Modifier.padding(bottom = 12.dp)
                 )
 
-                // Botón de cerrar sesión
                 DestructiveButton(
                     onClick = { showLogoutDialog = true },
                     text = "Cerrar Sesión",
                     icon = Icons.Default.ExitToApp,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !estaCargando
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
     }
 
     // Diálogo de confirmación de logout

@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.room.Room
 import com.gymnastic.ecommerceapp.data.local.AppDb
 import com.gymnastic.ecommerceapp.data.local.CartDao
-import com.gymnastic.ecommerceapp.data.local.UsuarioDao
 import com.gymnastic.ecommerceapp.data.local.DireccionDao
 import dagger.Module
 import dagger.Provides
@@ -13,6 +12,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
+/**
+ * Módulo de Hilt para proporcionar dependencias de Room Database
+ *
+ * ACTUALIZADO: Eliminado UsuarioDao (ahora se usa API para autenticación)
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
@@ -29,12 +33,12 @@ object DatabaseModule {
     }
 
     @Provides
-    fun provideUsuarioDao(database: AppDb): UsuarioDao {
-        return database.usuarioDao()
+    fun provideDireccionDao(database: AppDb): DireccionDao {
+        return database.direccionDao()
     }
 
     @Provides
-    fun provideDireccionDao(database: AppDb): DireccionDao {
-        return database.direccionDao()
+    fun provideProductDao(database: AppDb): com.gymnastic.ecommerceapp.data.local.ProductDao {
+        return database.productDao()
     }
 }
