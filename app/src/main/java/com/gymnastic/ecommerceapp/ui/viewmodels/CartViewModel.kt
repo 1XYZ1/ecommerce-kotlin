@@ -1,5 +1,6 @@
 package com.gymnastic.ecommerceapp.ui.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gymnastic.ecommerceapp.data.Repository
@@ -43,34 +44,15 @@ class CartViewModel @Inject constructor(
     // ========== OPERACIONES DEL CARRITO ==========
 
     /**
-     * Agrega un producto al carrito
-     *
-     * Si el producto ya existe en el carrito, incrementa la cantidad.
-     * Si no existe, lo agrega con cantidad 1.
+     * Agrega un producto al carrito con talla y cantidad específicas
      *
      * @param producto El producto a agregar al carrito
+     * @param size Talla seleccionada
+     * @param quantity Cantidad a agregar
      */
-    fun agregarAlCarrito(producto: Product) {
+    fun agregarAlCarrito(producto: Product, size: String, quantity: Int) {
         viewModelScope.launch {
-            repositorio.agregarAlCarrito(producto)
-        }
-    }
-
-    /**
-     * Agrega un producto al carrito con una cantidad específica
-     *
-     * Útil cuando el usuario selecciona una cantidad específica
-     * desde la pantalla de detalles del producto.
-     *
-     * @param producto El producto a agregar
-     * @param cantidad La cantidad a agregar
-     */
-    fun agregarAlCarritoConCantidad(producto: Product, cantidad: Int) {
-        viewModelScope.launch {
-            // Repetir la operación de agregar según la cantidad solicitada
-            repeat(cantidad) {
-                repositorio.agregarAlCarrito(producto)
-            }
+            repositorio.agregarAlCarrito(producto, size, quantity)
         }
     }
 
@@ -113,21 +95,41 @@ class CartViewModel @Inject constructor(
     // ========== OPERACIONES DE PRODUCTOS ==========
 
     /**
-     * Busca un producto por su ID
+     * Busca un producto por su ID desde la API
+     *
+     * ACTUALIZADO: Ahora es suspend y maneja Result
      *
      * @param idProducto ID del producto a buscar
-     * @return El producto encontrado o null si no existe
+     * @return Result con el producto o error
      */
-    fun obtenerProductoPorId(idProducto: String): Product? {
-        return repositorio.obtenerProductoPorId(idProducto)
+    suspend fun obtenerProductoPorId(idProducto: String): Product? {
+        return when (val resultado = repositorio.obtenerProductoPorId(idProducto)) {
+            is com.gymnastic.ecommerceapp.domain.Result.Exito -> resultado.datos
+            else -> null
+        }
     }
 
     /**
-     * Obtiene todos los productos disponibles
+     * Obtiene todos los productos desde la API
      *
-     * @return Lista de todos los productos en el catálogo
+     * ACTUALIZADO: Ahora es suspend y maneja Result
+     *
+     * @return Lista de productos o lista vacía si hay error
      */
-    fun obtenerTodosLosProductos(): List<Product> {
-        return repositorio.obtenerTodosLosProductos()
+    suspend fun obtenerTodosLosProductos(): List<Product> {
+        return when (val resultado = repositorio.obtenerTodosLosProductos()) {
+            is com.gymnastic.ecommerceapp.domain.Result.Exito -> {
+                Log.d("CartViewModel", "Productos cargados exitosamente: ${resultado.datos.size}")
+                resultado.datos
+            }
+            is com.gymnastic.ecommerceapp.domain.Result.Error -> {
+                Log.e("CartViewModel", "Error al cargar productos: ${resultado.mensaje}")
+                emptyList()
+            }
+            else -> {
+                Log.d("CartViewModel", "Cargando productos...")
+                emptyList()
+            }
+        }
     }
 }

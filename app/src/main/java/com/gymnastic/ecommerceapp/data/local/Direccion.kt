@@ -8,20 +8,10 @@ import java.util.UUID
 /**
  * Entidad para almacenar direcciones guardadas del usuario
  *
- * Permite al usuario guardar múltiples direcciones y establecer una como predeterminada.
- * Relacionada con la tabla de usuarios mediante foreign key.
+ * ACTUALIZADO: Eliminada foreign key a Usuario (ahora se usa API para auth)
+ * usuarioId se mantiene como referencia pero sin constraint de base de datos
  */
-@Entity(
-    tableName = "direcciones",
-    foreignKeys = [
-        ForeignKey(
-            entity = Usuario::class,
-            parentColumns = ["id"],
-            childColumns = ["usuarioId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ]
-)
+@Entity(tableName = "direcciones")
 data class Direccion(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),

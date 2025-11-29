@@ -3,6 +3,9 @@ package com.gymnastic.ecommerceapp.di
 import android.content.Context
 import com.gymnastic.ecommerceapp.data.Repository
 import com.gymnastic.ecommerceapp.data.local.AppDb
+import com.gymnastic.ecommerceapp.data.local.TokenManager
+import com.gymnastic.ecommerceapp.data.remote.api.ApiService
+import com.gymnastic.ecommerceapp.data.remote.datasource.AuthRemoteDataSource
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -11,27 +14,53 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 /**
- * Módulo de Dagger Hilt simplificado para proporcionar dependencias relacionadas con datos
+ * Módulo de Hilt para proporcionar dependencias relacionadas con datos
  *
- * Este módulo se encarga de:
- * - Proporcionar instancias de Repository
- * - Configurar el contexto de la aplicación para las dependencias
- *
- * NOTA: UserPreferences fue eliminado durante la simplificación.
- * Su funcionalidad ahora está directamente en AuthViewModel.
+ * ACTUALIZADO: Ahora incluye dependencias para API y autenticación
  */
 @Module
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
 
     /**
-     * Proporciona una instancia de Repository
-     * @param database instancia de la base de datos Room
-     * @return instancia de Repository configurada
+     * Proporciona AuthRemoteDataSource
      */
     @Provides
     @Singleton
-    fun provideRepository(database: AppDb): Repository {
-        return Repository(database)
+    fun provideAuthRemoteDataSource(apiService: ApiService): AuthRemoteDataSource {
+        return AuthRemoteDataSource(apiService)
+    }
+
+    /**
+     * Proporciona ProductRemoteDataSource
+     */
+    @Provides
+    @Singleton
+    fun provideProductRemoteDataSource(apiService: ApiService): com.gymnastic.ecommerceapp.data.remote.datasource.ProductRemoteDataSource {
+        return com.gymnastic.ecommerceapp.data.remote.datasource.ProductRemoteDataSource(apiService)
+    }
+
+    /**
+     * Proporciona CartRemoteDataSource
+     */
+    @Provides
+    @Singleton
+    fun provideCartRemoteDataSource(apiService: ApiService): com.gymnastic.ecommerceapp.data.remote.datasource.CartRemoteDataSource {
+        return com.gymnastic.ecommerceapp.data.remote.datasource.CartRemoteDataSource(apiService)
+    }
+
+    /**
+     * Proporciona una instancia de Repository con todas sus dependencias
+     */
+    @Provides
+    @Singleton
+    fun provideRepository(
+        database: AppDb,
+        authRemoteDataSource: AuthRemoteDataSource,
+        productRemoteDataSource: com.gymnastic.ecommerceapp.data.remote.datasource.ProductRemoteDataSource,
+        cartRemoteDataSource: com.gymnastic.ecommerceapp.data.remote.datasource.CartRemoteDataSource,
+        tokenManager: TokenManager
+    ): Repository {
+        return Repository(database, authRemoteDataSource, productRemoteDataSource, cartRemoteDataSource, tokenManager)
     }
 }

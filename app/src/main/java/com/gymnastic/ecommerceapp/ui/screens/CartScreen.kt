@@ -30,7 +30,11 @@ fun CartScreen(
     onBack: () -> Unit
 ) {
     val itemsCarrito by cartViewModel.itemsDelCarrito.collectAsState(initial = emptyList())
-    val total = itemsCarrito.sumOf { it.productPrice * it.quantity }
+
+    // Cálculos según la API
+    val subtotal = itemsCarrito.sumOf { it.productPrice * it.quantity }
+    val tax = subtotal * 0.16  // IVA 16%
+    val total = subtotal + tax
 
     // Estado para el diálogo de confirmación
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -51,11 +55,42 @@ fun CartScreen(
             if (itemsCarrito.isNotEmpty()) {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
+                        // Subtotal
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Total:", fontSize = 18.sp, fontWeight = FontWeight.Medium)
+                            Text("Subtotal:", fontSize = 16.sp)
+                            Text(
+                                "$${String.format("%.2f", subtotal)}",
+                                fontSize = 16.sp
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // Tax (IVA)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("IVA (16%):", fontSize = 16.sp)
+                            Text(
+                                "$${String.format("%.2f", tax)}",
+                                fontSize = 16.sp
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Divider()
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Total
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Total:", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                             Text(
                                 "$${String.format("%.2f", total)}",
                                 fontSize = 24.sp,
