@@ -16,7 +16,7 @@ data class CartItemDto(
     val quantity: Int,
     val size: String,
     val priceAtTime: Double,
-    val product: ProductDto
+    val product: ProductDto? = null
 )
 
 /**
@@ -25,12 +25,12 @@ data class CartItemDto(
 data class CartDto(
     val id: String,
     val userId: String,
-    val items: List<CartItemDto>,
+    val items: List<CartItemDto> = emptyList(),
     val subtotal: Double,
     val tax: Double,
     val total: Double,
-    val updatedAt: String,
-    val createdAt: String
+    val updatedAt: String? = null,
+    val createdAt: String? = null
 )
 
 /**
@@ -78,13 +78,42 @@ data class FailedSyncItem(
 
 /**
  * Convierte CartItemDto (API) a CartItem (Room)
+ *
+ * Maneja el caso donde product puede ser null, usando priceAtTime como fallback
  */
 fun CartItemDto.toLocal(): com.gymnastic.ecommerceapp.data.local.CartItem {
-    return com.gymnastic.ecommerceapp.data.local.CartItem(
+    android.util.Log.d("CartDto", "========== CONVIRTIENDO CartItemDto a CartItem ==========")
+    android.util.Log.d("CartDto", "CartItemDto recibido:")
+    android.util.Log.d("CartDto", "  id: $id")
+    android.util.Log.d("CartDto", "  productId: $productId")
+    android.util.Log.d("CartDto", "  quantity: $quantity")
+    android.util.Log.d("CartDto", "  size: $size")
+    android.util.Log.d("CartDto", "  priceAtTime: $priceAtTime")
+    android.util.Log.d("CartDto", "  product: $product")
+
+    if (product != null) {
+        android.util.Log.d("CartDto", "  product.title: ${product.title}")
+        android.util.Log.d("CartDto", "  product.price: ${product.price}")
+        android.util.Log.d("CartDto", "  product.images: ${product.images.size} imágenes")
+    } else {
+        android.util.Log.w("CartDto", "  ⚠️ product es NULL")
+    }
+
+    val cartItem = com.gymnastic.ecommerceapp.data.local.CartItem(
         productId = productId,
-        productName = product.title,
-        productPrice = product.price,
-        productImageUrl = product.images.firstOrNull() ?: "",
+        productName = product?.title ?: "Producto",
+        productPrice = product?.price ?: priceAtTime,
+        productImageUrl = product?.images?.firstOrNull() ?: "",
         quantity = quantity
     )
+
+    android.util.Log.d("CartDto", "CartItem creado:")
+    android.util.Log.d("CartDto", "  productId: ${cartItem.productId}")
+    android.util.Log.d("CartDto", "  productName: ${cartItem.productName}")
+    android.util.Log.d("CartDto", "  productPrice: ${cartItem.productPrice}")
+    android.util.Log.d("CartDto", "  productImageUrl: ${cartItem.productImageUrl}")
+    android.util.Log.d("CartDto", "  quantity: ${cartItem.quantity}")
+    android.util.Log.d("CartDto", "========== FIN CONVERSIÓN ==========")
+
+    return cartItem
 }

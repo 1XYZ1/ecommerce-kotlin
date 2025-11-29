@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import com.gymnastic.ecommerceapp.domain.Product
+import com.gymnastic.ecommerceapp.ui.components.AddToCartDialog
 import com.gymnastic.ecommerceapp.ui.components.ProductCard
 import com.gymnastic.ecommerceapp.ui.components.SearchTextField
 import com.gymnastic.ecommerceapp.ui.theme.AppDimensions
@@ -64,6 +65,10 @@ fun HomeScreen(
     var todosLosProductos by remember { mutableStateOf<List<Product>>(emptyList()) }
     var estaCargandoProductos by remember { mutableStateOf(true) }
     var mensajeError by remember { mutableStateOf<String?>(null) }
+
+    // Estado para el diálogo de agregar al carrito
+    var showAddToCartDialog by remember { mutableStateOf(false) }
+    var selectedProduct by remember { mutableStateOf<Product?>(null) }
 
     // Cargar productos al iniciar la pantalla
     LaunchedEffect(Unit) {
@@ -221,25 +226,38 @@ fun HomeScreen(
                             product = producto,
                             onProductClick = onProductClick,
                             onAddToCart = {
-                                cartViewModel.agregarAlCarrito(producto)
-                                NativeUtils.vibrateOnAddToCart(contexto)
-                                // Mostrar Snackbar con feedback
-                                scope.launch {
-                                    val result = snackbarHostState.showSnackbar(
-                                        message = "${producto.name} agregado al carrito",
-                                        actionLabel = "Ver carrito",
-                                        duration = SnackbarDuration.Short
-                                    )
-                                    if (result == SnackbarResult.ActionPerformed) {
-                                        // Navegar al carrito si presiona "Ver carrito"
-                                        // Necesitarías pasar un callback onNavigateToCart
-                                    }
-                                }
+                                // Mostrar diálogo para seleccionar talla y cantidad
+                                selectedProduct = producto
+                                showAddToCartDialog = true
                             }
                         )
                     }
                 }
             }
         }
+    }
+
+    // Diálogo para agregar al carrito
+    if (showAddToCartDialog && selectedProduct != null) {
+        AddToCartDialog(
+            product = selectedProduct!!,
+            onDismiss = {
+                showAddToCartDialog = false
+                selectedProduct = null
+            },
+            onConfirm = { size, quantity ->
+                val producto = selectedProduct!! // Guardar referencia antes de que se limpie
+                cartViewModel.agregarAlCarrito(producto, size, quantity)
+                NativeUtils.vibrateOnAddToCart(contexto)
+                // Mostrar Snackbar con feedback
+                scope.launch {
+                    snackbarHostState.showSnackbar(
+                        message = "${producto.name} agregado al carrito (${quantity} ud.)",
+                        actionLabel = "OK",
+                        duration = SnackbarDuration.Short
+                    )
+                }
+            }
+        )
     }
 }

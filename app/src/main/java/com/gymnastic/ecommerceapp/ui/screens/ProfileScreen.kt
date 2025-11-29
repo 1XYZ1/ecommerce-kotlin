@@ -46,6 +46,20 @@ fun ProfileScreen(
         android.util.Log.d("ProfileScreen", "  esAdmin: ${infoUsuario.esAdmin}")
     }
 
+    // Observar estado de login y navegar cuando cambie a false
+    val estaLogueado by authViewModel.estaLogueado.collectAsState()
+    var primeraCarga by remember { mutableStateOf(true) }
+
+    LaunchedEffect(estaLogueado) {
+        android.util.Log.d("ProfileScreen", "Estado estaLogueado cambió a: $estaLogueado")
+        // Solo navegar si no es la primera carga y el usuario cerró sesión
+        if (!primeraCarga && !estaLogueado) {
+            android.util.Log.d("ProfileScreen", "Usuario cerró sesión, navegando a login...")
+            onLogout()
+        }
+        primeraCarga = false
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -255,9 +269,10 @@ fun ProfileScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
+                        android.util.Log.d("ProfileScreen", "Confirmado logout, cerrando diálogo y llamando cerrarSesion()")
                         showLogoutDialog = false
                         authViewModel.cerrarSesion()
-                        onLogout()
+                        // onLogout() se llamará automáticamente cuando estaLogueado cambie a false
                     }
                 ) {
                     Text(

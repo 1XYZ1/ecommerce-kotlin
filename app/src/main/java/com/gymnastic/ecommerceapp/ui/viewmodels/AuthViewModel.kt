@@ -63,9 +63,13 @@ class AuthViewModel @Inject constructor(
         // Verificar si hay sesión válida al iniciar
         viewModelScope.launch {
             try {
+                Log.d("AuthViewModel", "========== INIT: Verificando sesión ==========")
                 val tieneToken = repositorio.estaAutenticado()
+                Log.d("AuthViewModel", "Tiene token guardado: $tieneToken")
+
                 if (tieneToken) {
                     // Intentar verificar el token con la API
+                    Log.d("AuthViewModel", "Verificando estado con API...")
                     when (val resultado = repositorio.verificarEstadoAuth()) {
                         is Result.Exito -> {
                             // Token válido, restaurar sesión
@@ -76,11 +80,12 @@ class AuthViewModel @Inject constructor(
                                 estaLogueado = true,
                                 esAdmin = resultado.datos.esAdmin
                             )
-                            Log.d("AuthViewModel", "Sesión restaurada: ${resultado.datos.nombre}")
+                            Log.d("AuthViewModel", "✓ Sesión restaurada: ${resultado.datos.nombre}")
+                            Log.d("AuthViewModel", "  (La sincronización del carrito se ejecutó en verificarEstadoAuth)")
                         }
                         is Result.Error -> {
                             // Token inválido, limpiar
-                            Log.d("AuthViewModel", "Token inválido, limpiando sesión")
+                            Log.d("AuthViewModel", "✗ Token inválido, limpiando sesión")
                             repositorio.cerrarSesion()
                             _estaLogueado.value = false
                             _infoUsuario.value = UserInfo("", "", false, false)
@@ -89,9 +94,11 @@ class AuthViewModel @Inject constructor(
                     }
                 } else {
                     // No hay token, iniciar limpio
+                    Log.d("AuthViewModel", "No hay token, iniciando sin autenticar")
                     _estaLogueado.value = false
                     _infoUsuario.value = UserInfo("", "", false, false)
                 }
+                Log.d("AuthViewModel", "========== FIN INIT ==========")
             } catch (e: Exception) {
                 // Si falla, empezar sin autenticar
                 Log.e("AuthViewModel", "Error al verificar sesión inicial", e)
@@ -271,11 +278,26 @@ class AuthViewModel @Inject constructor(
     fun cerrarSesion() {
         viewModelScope.launch {
             try {
+                Log.d("AuthViewModel", "========== CERRANDO SESIÓN ==========")
+                Log.d("AuthViewModel", "Estado antes: estaLogueado=${_estaLogueado.value}")
+                Log.d("AuthViewModel", "  nombre: ${_infoUsuario.value.nombre}")
+                Log.d("AuthViewModel", "  email: ${_infoUsuario.value.email}")
+
+                // Eliminar token del servidor/DataStore
                 repositorio.cerrarSesion()
+                Log.d("AuthViewModel", "✓ Token eliminado del DataStore")
+
+                // Actualizar estados locales
                 _estaLogueado.value = false
                 _infoUsuario.value = UserInfo("", "", false, false)
                 _mensajeError.value = null
+
+                Log.d("AuthViewModel", "✓ Estados actualizados:")
+                Log.d("AuthViewModel", "  estaLogueado=${_estaLogueado.value}")
+                Log.d("AuthViewModel", "  infoUsuario=${_infoUsuario.value}")
+                Log.d("AuthViewModel", "========== SESIÓN CERRADA ==========")
             } catch (e: Exception) {
+                Log.e("AuthViewModel", "✗ Error al cerrar sesión", e)
                 _mensajeError.value = "Error al cerrar sesión: ${e.message}"
             }
         }

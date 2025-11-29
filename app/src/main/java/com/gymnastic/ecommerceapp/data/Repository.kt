@@ -206,60 +206,118 @@ class Repository @Inject constructor(
     fun obtenerItemsDelCarrito(): Flow<List<CartItem>> = daoCarrito.getAllCartItems()
 
     /**
-     * Agrega un producto al carrito con sincronización a API
+     * Obtiene el carrito actual directamente (sin Flow)
+     * Útil para debugging
+     */
+    suspend fun obtenerCarritoActual(): List<CartItem> {
+        val items = daoCarrito.getAllCartItems().firstOrNull() ?: emptyList()
+        android.util.Log.d("Repository", "Carrito actual en Room: ${items.size} items")
+        items.forEach {
+            android.util.Log.d("Repository", "  - ${it.productName} (qty: ${it.quantity}, price: ${it.productPrice})")
+        }
+        return items
+    }
+
+    /**
+     * Agrega un producto al carrito con talla y cantidad específicas
      *
      * Estrategia:
-     * 1. Actualiza Room local primero (UX inmediata)
-     * 2. Si está autenticado, sincroniza con API en background
+     * - Si está autenticado: Agregar via API y actualizar Room con respuesta
+     * - Si no está autenticado: Agregar solo en Room local
+     *
+     * @param producto Producto a agregar
+     * @param size Talla seleccionada (debe ser una talla válida del producto)
+     * @param quantity Cantidad a agregar (debe ser <= stock)
      */
-    suspend fun agregarAlCarrito(producto: Product) {
-        // Actualizar local primero
+    suspend fun agregarAlCarrito(producto: Product, size: String, quantity: Int) {
+        android.util.Log.d("Repository", "========== AGREGANDO AL CARRITO ==========")
+        android.util.Log.d("Repository", "Producto: ${producto.name} (${producto.id})")
+        android.util.Log.d("Repository", "Talla seleccionada: $size")
+        android.util.Log.d("Repository", "Cantidad: $quantity")
+        android.util.Log.d("Repository", "Stock disponible: ${producto.stock}")
+        android.util.Log.d("Repository", "Usuario autenticado: ${tokenManager.tieneToken()}")
+
+        if (tokenManager.tieneToken()) {
+            // Usuario autenticado: agregar via API
+            android.util.Log.d("Repository", "Agregando via API...")
+            when (val resultado = cartRemoteDataSource.agregarItem(producto.id, quantity, size)) {
+                is Result.Exito -> {
+                    android.util.Log.d("Repository", "✓ Agregado en API exitosamente")
+                    android.util.Log.d("Repository", "  Carrito ahora tiene ${resultado.datos.items.size} items")
+
+                    // Actualizar Room con todo el carrito del servidor
+                    daoCarrito.clearCart()
+                    resultado.datos.items.forEach { itemDto ->
+                        val itemLocal = itemDto.toLocal()
+                        daoCarrito.insertCartItem(itemLocal)
+                        android.util.Log.d("Repository", "  ✓ Insertado en Room: ${itemLocal.productName} (qty: ${itemLocal.quantity})")
+                    }
+                }
+                is Result.Error -> {
+                    android.util.Log.e("Repository", "✗ Error al agregar en API: ${resultado.mensaje}")
+                    android.util.Log.d("Repository", "Agregando solo localmente como fallback...")
+                    agregarSoloLocal(producto, quantity)
+                }
+                else -> {}
+            }
+        } else {
+            // Usuario no autenticado: agregar solo en Room
+            android.util.Log.d("Repository", "Agregando solo en Room (usuario no autenticado)...")
+            agregarSoloLocal(producto, quantity)
+        }
+        android.util.Log.d("Repository", "========== FIN AGREGAR AL CARRITO ==========")
+    }
+
+    /**
+     * Agrega un producto solo en Room (sin API)
+     */
+    private suspend fun agregarSoloLocal(producto: Product, quantity: Int) {
         val itemExistente = daoCarrito.getCartItem(producto.id)
         if (itemExistente != null) {
-            val itemActualizado = itemExistente.copy(quantity = itemExistente.quantity + 1)
+            val itemActualizado = itemExistente.copy(quantity = itemExistente.quantity + quantity)
             daoCarrito.updateCartItem(itemActualizado)
+            android.util.Log.d("Repository", "  ✓ Cantidad actualizada: ${itemActualizado.quantity}")
         } else {
             val nuevoItem = CartItem(
                 productId = producto.id,
                 productName = producto.name,
                 productPrice = producto.price,
                 productImageUrl = producto.imageUrl,
-                quantity = 1
+                quantity = quantity
             )
             daoCarrito.insertCartItem(nuevoItem)
-        }
-
-        // Sincronizar con API si está autenticado
-        if (tokenManager.tieneToken()) {
-            try {
-                cartRemoteDataSource.agregarItem(producto.id, 1)
-            } catch (e: Exception) {
-                // Si falla, mantener cambio local
-            }
+            android.util.Log.d("Repository", "  ✓ Nuevo item insertado en Room (qty: $quantity)")
         }
     }
 
     /**
      * Elimina un producto del carrito con sincronización a API
+     *
+     * Estrategia:
+     * 1. Elimina localmente para feedback inmediato
+     * 2. La sincronización completa ocurre en el próximo login/startup
+     *
+     * Nota: La API requiere itemId (no productId) para eliminar,
+     * por lo que la sincronización completa se hace via sincronizarCarritoConServidor()
      */
     suspend fun eliminarDelCarrito(idProducto: String) {
         // Eliminar localmente
         val item = daoCarrito.getCartItem(idProducto)
         item?.let { daoCarrito.deleteCartItem(it) }
 
-        // Sincronizar con API si está autenticado
-        if (tokenManager.tieneToken()) {
-            try {
-                // Nota: API usa itemId, necesitamos obtenerlo del carrito completo
-                // Por simplicidad, vamos a vaciar y recargar
-            } catch (e: Exception) {
-                // Mantener eliminación local
-            }
-        }
+        // La sincronización completa con la API se hace automáticamente
+        // en login/registro/verificación de estado
     }
 
     /**
      * Actualiza la cantidad de un producto en el carrito con sincronización
+     *
+     * Estrategia:
+     * 1. Actualiza localmente para feedback inmediato
+     * 2. La sincronización completa ocurre en el próximo login/startup
+     *
+     * Nota: La API requiere itemId (no productId) para actualizar,
+     * por lo que la sincronización completa se hace via sincronizarCarritoConServidor()
      */
     suspend fun actualizarCantidadEnCarrito(idProducto: String, cantidad: Int) {
         // Actualizar localmente
@@ -272,14 +330,8 @@ class Repository @Inject constructor(
             }
         }
 
-        // Sincronizar con API si está autenticado
-        if (tokenManager.tieneToken()) {
-            try {
-                // Por simplicidad, recargar carrito completo después
-            } catch (e: Exception) {
-                // Mantener cambio local
-            }
-        }
+        // La sincronización completa con la API se hace automáticamente
+        // en login/registro/verificación de estado
     }
 
     /**
@@ -305,37 +357,77 @@ class Repository @Inject constructor(
      */
     suspend fun sincronizarCarritoConServidor() {
         try {
+            android.util.Log.d("Repository", "========== INICIANDO SINCRONIZACIÓN DE CARRITO ==========")
+
             // Obtener items locales
             val itemsLocales = daoCarrito.getAllCartItems().firstOrNull() ?: emptyList()
+            android.util.Log.d("Repository", "Items locales encontrados: ${itemsLocales.size}")
+            itemsLocales.forEach {
+                android.util.Log.d("Repository", "  - ${it.productName} (qty: ${it.quantity})")
+            }
 
             if (itemsLocales.isEmpty()) {
+                android.util.Log.d("Repository", "No hay items locales, obteniendo del servidor...")
                 // Si no hay items locales, obtener del servidor
                 when (val resultado = cartRemoteDataSource.obtenerCarrito()) {
                     is Result.Exito -> {
+                        android.util.Log.d("Repository", "Carrito del servidor recibido:")
+                        android.util.Log.d("Repository", "  - Items: ${resultado.datos.items.size}")
+                        android.util.Log.d("Repository", "  - Subtotal: ${resultado.datos.subtotal}")
+                        android.util.Log.d("Repository", "  - Tax: ${resultado.datos.tax}")
+                        android.util.Log.d("Repository", "  - Total: ${resultado.datos.total}")
+
                         val itemsServidor = resultado.datos.items.map { it.toLocal() }
-                        itemsServidor.forEach { daoCarrito.insertCartItem(it) }
+                        android.util.Log.d("Repository", "Insertando ${itemsServidor.size} items en Room...")
+                        itemsServidor.forEach {
+                            daoCarrito.insertCartItem(it)
+                            android.util.Log.d("Repository", "  ✓ Insertado: ${it.productName}")
+                        }
+                        android.util.Log.d("Repository", "Items del servidor guardados en Room")
+                    }
+                    is Result.Error -> {
+                        android.util.Log.e("Repository", "Error al obtener carrito: ${resultado.mensaje}")
                     }
                     else -> {}
                 }
+                android.util.Log.d("Repository", "========== FIN SINCRONIZACIÓN (sin items locales) ==========")
                 return
             }
 
             // Sincronizar items locales al servidor
+            android.util.Log.d("Repository", "Sincronizando ${itemsLocales.size} items locales al servidor...")
             when (val resultado = cartRemoteDataSource.sincronizarCarrito(itemsLocales)) {
                 is Result.Exito -> {
+                    android.util.Log.d("Repository", "Sincronización exitosa!")
+                    android.util.Log.d("Repository", "  - Sincronizados: ${resultado.datos.synced}")
+                    android.util.Log.d("Repository", "  - Fallidos: ${resultado.datos.failed.size}")
+                    resultado.datos.failed.forEach {
+                        android.util.Log.w("Repository", "    x ${it.item.productId}: ${it.reason}")
+                    }
+                    android.util.Log.d("Repository", "  - Carrito final: ${resultado.datos.cart.items.size} items")
+
                     // Limpiar carrito local
                     daoCarrito.clearCart()
+                    android.util.Log.d("Repository", "Carrito local limpiado")
 
                     // Insertar items mergeados del servidor
                     val itemsMergeados = resultado.datos.cart.items.map { it.toLocal() }
-                    itemsMergeados.forEach { daoCarrito.insertCartItem(it) }
+                    android.util.Log.d("Repository", "Insertando ${itemsMergeados.size} items mergeados...")
+                    itemsMergeados.forEach {
+                        daoCarrito.insertCartItem(it)
+                        android.util.Log.d("Repository", "  ✓ Insertado: ${it.productName} (qty: ${it.quantity})")
+                    }
                 }
-                else -> {
-                    // Si falla sync, mantener items locales
+                is Result.Error -> {
+                    android.util.Log.e("Repository", "Error al sincronizar: ${resultado.mensaje}")
+                    android.util.Log.d("Repository", "Manteniendo items locales")
                 }
+                else -> {}
             }
+            android.util.Log.d("Repository", "========== FIN SINCRONIZACIÓN DE CARRITO ==========")
         } catch (e: Exception) {
-            // Si falla, mantener carrito local
+            android.util.Log.e("Repository", "Excepción al sincronizar carrito", e)
+            android.util.Log.d("Repository", "Manteniendo carrito local")
         }
     }
 
@@ -381,6 +473,10 @@ class Repository @Inject constructor(
                 android.util.Log.d("Repository", "  esAdmin: ${usuario.esAdmin}")
                 android.util.Log.d("Repository", "============================================")
 
+                // Sincronizar carrito con el servidor después del login
+                sincronizarCarritoConServidor()
+                android.util.Log.d("Repository", "Carrito sincronizado después del login")
+
                 // Retornar el usuario convertido a modelo de dominio
                 Result.Exito(usuario)
             }
@@ -416,6 +512,10 @@ class Repository @Inject constructor(
                 // Guardar el token JWT
                 tokenManager.guardarToken(token)
 
+                // Sincronizar carrito con el servidor después del registro
+                sincronizarCarritoConServidor()
+                android.util.Log.d("Repository", "Carrito sincronizado después del registro")
+
                 // Retornar el usuario convertido a modelo de dominio
                 Result.Exito(resultado.datos.toDomain())
             }
@@ -450,6 +550,11 @@ class Repository @Inject constructor(
             is Result.Exito -> {
                 // Actualizar token si viene uno nuevo
                 resultado.datos.token?.let { tokenManager.guardarToken(it) }
+
+                // Sincronizar carrito al restaurar sesión
+                sincronizarCarritoConServidor()
+                android.util.Log.d("Repository", "Carrito sincronizado al restaurar sesión")
+
                 Result.Exito(resultado.datos.toDomain())
             }
             is Result.Error -> {

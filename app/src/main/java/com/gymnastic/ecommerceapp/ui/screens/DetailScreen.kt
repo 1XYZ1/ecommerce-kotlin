@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.gymnastic.ecommerceapp.ui.components.AddToCartDialog
 import com.gymnastic.ecommerceapp.ui.components.OutlineButton
 import com.gymnastic.ecommerceapp.ui.components.PrimaryButton
 import com.gymnastic.ecommerceapp.ui.theme.AppDimensions
@@ -36,7 +37,9 @@ fun DetailScreen(
     val context = LocalContext.current
     var producto by remember { mutableStateOf<com.gymnastic.ecommerceapp.domain.Product?>(null) }
     var estaCargando by remember { mutableStateOf(true) }
-    var quantity by remember { mutableStateOf(1) }
+
+    // Estado para el diálogo de agregar al carrito
+    var showAddToCartDialog by remember { mutableStateOf(false) }
 
     // Cargar producto de forma asíncrona
     LaunchedEffect(productoId) {
@@ -129,39 +132,12 @@ fun DetailScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Selector de cantidad
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Cantidad:", fontSize = 18.sp, fontWeight = FontWeight.Medium)
+                Spacer(modifier = Modifier.height(24.dp))
 
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = { if (quantity > 1) quantity-- }) {
-                            Text("-", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                        }
-
-                        Text(
-                            quantity.toString(),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        )
-
-                        IconButton(onClick = { quantity++ }) {
-                            Text("+", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Botones de acción
+                // Botón para abrir el diálogo
                 PrimaryButton(
                     onClick = {
-                        cartViewModel.agregarAlCarritoConCantidad(productoActual, quantity)
-                        NativeUtils.vibrateOnAddToCart(context)
+                        showAddToCartDialog = true
                     },
                     text = "Agregar al carrito",
                     modifier = Modifier.fillMaxWidth()
@@ -178,5 +154,19 @@ fun DetailScreen(
                 Spacer(modifier = Modifier.height(32.dp))
             }
         }
+    }
+
+    // Diálogo para agregar al carrito
+    if (showAddToCartDialog && producto != null) {
+        AddToCartDialog(
+            product = producto!!,
+            onDismiss = {
+                showAddToCartDialog = false
+            },
+            onConfirm = { size, quantity ->
+                cartViewModel.agregarAlCarrito(producto!!, size, quantity)
+                NativeUtils.vibrateOnAddToCart(context)
+            }
+        )
     }
 }

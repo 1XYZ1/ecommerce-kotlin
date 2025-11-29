@@ -44,34 +44,15 @@ class CartViewModel @Inject constructor(
     // ========== OPERACIONES DEL CARRITO ==========
 
     /**
-     * Agrega un producto al carrito
-     *
-     * Si el producto ya existe en el carrito, incrementa la cantidad.
-     * Si no existe, lo agrega con cantidad 1.
+     * Agrega un producto al carrito con talla y cantidad específicas
      *
      * @param producto El producto a agregar al carrito
+     * @param size Talla seleccionada
+     * @param quantity Cantidad a agregar
      */
-    fun agregarAlCarrito(producto: Product) {
+    fun agregarAlCarrito(producto: Product, size: String, quantity: Int) {
         viewModelScope.launch {
-            repositorio.agregarAlCarrito(producto)
-        }
-    }
-
-    /**
-     * Agrega un producto al carrito con una cantidad específica
-     *
-     * Útil cuando el usuario selecciona una cantidad específica
-     * desde la pantalla de detalles del producto.
-     *
-     * @param producto El producto a agregar
-     * @param cantidad La cantidad a agregar
-     */
-    fun agregarAlCarritoConCantidad(producto: Product, cantidad: Int) {
-        viewModelScope.launch {
-            // Repetir la operación de agregar según la cantidad solicitada
-            repeat(cantidad) {
-                repositorio.agregarAlCarrito(producto)
-            }
+            repositorio.agregarAlCarrito(producto, size, quantity)
         }
     }
 

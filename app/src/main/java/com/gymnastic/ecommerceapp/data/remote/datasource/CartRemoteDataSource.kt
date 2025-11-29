@@ -44,8 +44,34 @@ class CartRemoteDataSource @Inject constructor(
         size: String = "UNICO"
     ): Result<CartDto> {
         return try {
+            android.util.Log.d("CartRemoteDataSource", "========== AGREGANDO ITEM AL CARRITO ==========")
+            android.util.Log.d("CartRemoteDataSource", "Request:")
+            android.util.Log.d("CartRemoteDataSource", "  productId: $productId")
+            android.util.Log.d("CartRemoteDataSource", "  quantity: $quantity")
+            android.util.Log.d("CartRemoteDataSource", "  size: $size")
+
             val request = AddCartItemRequest(productId, quantity, size)
             val response = apiService.agregarAlCarrito(request)
+
+            android.util.Log.d("CartRemoteDataSource", "Respuesta de API recibida:")
+            android.util.Log.d("CartRemoteDataSource", "  Cart ID: ${response.id}")
+            android.util.Log.d("CartRemoteDataSource", "  User ID: ${response.userId}")
+            android.util.Log.d("CartRemoteDataSource", "  Items count: ${response.items.size}")
+            android.util.Log.d("CartRemoteDataSource", "  Subtotal: ${response.subtotal}")
+            android.util.Log.d("CartRemoteDataSource", "  Tax: ${response.tax}")
+            android.util.Log.d("CartRemoteDataSource", "  Total: ${response.total}")
+
+            response.items.forEachIndexed { index, item ->
+                android.util.Log.d("CartRemoteDataSource", "  Item $index:")
+                android.util.Log.d("CartRemoteDataSource", "    id: ${item.id}")
+                android.util.Log.d("CartRemoteDataSource", "    productId: ${item.productId}")
+                android.util.Log.d("CartRemoteDataSource", "    quantity: ${item.quantity}")
+                android.util.Log.d("CartRemoteDataSource", "    size: ${item.size}")
+                android.util.Log.d("CartRemoteDataSource", "    priceAtTime: ${item.priceAtTime}")
+                android.util.Log.d("CartRemoteDataSource", "    product: ${if (item.product != null) "present" else "NULL"}")
+            }
+
+            android.util.Log.d("CartRemoteDataSource", "========== FIN AGREGAR ITEM ==========")
             Result.Exito(response)
         } catch (e: HttpException) {
             val mensaje = when (e.code()) {
@@ -54,10 +80,13 @@ class CartRemoteDataSource @Inject constructor(
                 404 -> "Producto no encontrado"
                 else -> "Error del servidor (${e.code()})"
             }
+            android.util.Log.e("CartRemoteDataSource", "Error HTTP: ${e.code()} - $mensaje", e)
             Result.Error(mensaje)
         } catch (e: IOException) {
+            android.util.Log.e("CartRemoteDataSource", "Error de conexión", e)
             Result.Error("Error de conexión")
         } catch (e: Exception) {
+            android.util.Log.e("CartRemoteDataSource", "Error inesperado", e)
             Result.Error("Error: ${e.message}")
         }
     }
